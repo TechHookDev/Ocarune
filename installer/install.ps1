@@ -19,7 +19,7 @@ $ProgressPreference = "SilentlyContinue"
 $B = "https://github.com/TechHookDev/Ocarune/releases/download/tools-v1"
 $parts = @(
   @{n="cpm";         h="bfd2206346ad0c2f85a136c719668647193f3fa0385f30580d1b501eafd84bdf"; u="$B/Ocarune-cpm-bfd2206346ad.zip";                from="Ocarune\tools\cpm"; s="cpm"},
-  @{n="third_party"; h="bc1fc03536519dd02913d70d681576f209ec9c12092006fe9b6ac0233cf8b302"; u="$B/Ocarune-third_party-bc1fc0353651.zip";     from="Ocarune\tools\third_party"; s="third_party\sdl2\SDL2.dll"},
+  @{n="third_party"; h="d8a4799bbe1df953ccc59eeccf05de56ae72fcbc765b7e19334f6a898b5bcf81"; u="$B/Ocarune-third_party-d8a4799bbe1d.zip";     from="Ocarune\tools\third_party"; s="third_party\sdl2\SDL2.dll"},
   @{n="wgpu-native"; h="c61896fa48ae653013cc8fd3ba54d383e785e00ead2411ca4958e2b6a96a5163"; u="$B/Ocarune-wgpu-native-c61896fa48ae.zip"; from="Ocarune\tools\wgpu-native"; s="wgpu-native\include"},
   @{n="llvm-mingw";  h="552191b5754c49a5a20723276a6fc56541ea1922c4c50b7b669022333fc1b40f"; u="https://github.com/mstorsjo/llvm-mingw/releases/download/20261104/llvm-mingw-20261104-ucrt-x86_64.zip"; from="llvm-mingw-20261104-ucrt-x86_64"; s="llvm-mingw\bin"}
 )
