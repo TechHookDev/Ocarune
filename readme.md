@@ -25,6 +25,25 @@
 > You need your own copy of the game (a `.nup` package, or its extracted `exefs` and `romfs`). Everything Ocarune makes
 > comes from your copy, is made on your PC and stays on it. Never share those files.
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/images/title-ranch.jpg" width="49%" alt="Title screen at 2560x1440 with the FPS counter showing 120">
+  <img src="docs/images/title-valley.jpg" width="49%" alt="Title screen, a second scene">
+</p>
+<p align="center">
+  <img src="docs/images/night-field.jpg" width="98%" alt="Night field with the moon">
+</p>
+
+Captured at 2560x1440 with the default settings: FSR 3 upscaling and frame generation, 120 FPS on screen (the game itself runs at 60).
+
+The setup wizard:
+
+<p align="center">
+  <img src="docs/images/setup-welcome.png" width="49%" alt="Setup wizard, welcome page">
+  <img src="docs/images/setup-game-file.png" width="49%" alt="Setup wizard, game file page">
+</p>
+
 ## Why Ocarune
 
 Ocarune is a **static recompilation**. Your copy of the game is translated to C once, compiled into a Windows program, the
