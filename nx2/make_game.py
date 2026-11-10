@@ -1090,7 +1090,7 @@ def main(a=None):
     # (files of the earlier naming: the old exe and DLL go, the player's settings and caches keep their contents under the new names)
     if not LINUX:
         for old in ("hylia.exe", "hylia_vk.dll", "hylia.map"):
-            if os.path.isfile(os.path.join(out, old)) and not launcher:
+            if old != GAME_EXE and os.path.isfile(os.path.join(out, old)) and not launcher:
                 try: os.remove(os.path.join(out, old))
                 except OSError: pass
         for old in ("options.ini", "env.txt", "pipelines.bin", "programs.bin", "programs.idx", "shaders.bin", "prepared.bin"):

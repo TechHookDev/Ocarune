@@ -61,6 +61,7 @@ MODULES = {
 # Checks that cannot run in CI, with why, by OS. Each still runs with --no-skip (or by name).
 SKIP = {
     "tests/test_precompile_compute_guard.py": ({"linux"}, "Windows structured exceptions"),
+    "tests/test_mouse_native.py": ({"linux"}, "host/posix (windows.h stand-in) is not in this tree"),
     # (the game: these run the lifted code of a real dump against Unicorn)
     "nx2/test_insn.py": ({"linux", "windows"}, "needs the game's modules (work/dump) and Unicorn"),
     "nx2/test_leaf.py": ({"linux", "windows"}, "needs the game's modules (work/dump) and Unicorn"),

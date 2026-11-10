@@ -104,6 +104,12 @@ static void au_opened(HWAVEOUT w) { (void)w; }
 #define waveOutUnprepareHeader test_unprepare
 #define waveOutReset test_reset
 #define waveOutClose test_close
+/* the menu's master-volume block in the section under test */
+typedef unsigned long DWORD;
+static int rx_option(int id, int otherwise) { (void)id; return otherwise; }
+static void *GetForegroundWindow(void) { return 0; }
+static DWORD GetWindowThreadProcessId(void *w, DWORD *pid) { (void)w; *pid = 0; return 0; }
+static DWORD GetCurrentProcessId(void) { return 0; }
 #include "audio_output.inc"
 
 static void complete_all(void) {

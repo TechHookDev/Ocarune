@@ -39,12 +39,11 @@ def main():
 ''' + fn + r'''
 int main() {
     CHECK(std::strcmp(tx_upscale(0), "Off") == 0);
-    CHECK(std::strcmp(tx_upscale(1), "Catmull-Rom") == 0);
-    CHECK(std::strcmp(tx_upscale(2), "Lanczos") == 0);
+    CHECK(std::strcmp(tx_upscale(1), "FSR 3") == 0);
     CHECK(std::strcmp(tx_upscale(-1), "Off") == 0);
-    CHECK(std::strcmp(tx_upscale(3), "Off") == 0);
+    CHECK(std::strcmp(tx_upscale(2), "Off") == 0);
     CHECK(std::strcmp(tx_upscale(99), "Off") == 0);
-    std::printf("PASS: upscale labels for 0..2 and for a setting past the row\n");
+    std::printf("PASS: upscale labels for 0..1 and for a setting past the row\n");
 }
 '''
     with tempfile.TemporaryDirectory(prefix="upscale-label-") as tmp:

@@ -67,7 +67,7 @@ class FinishOutputTests(unittest.TestCase):
     def finish(self, launcher=False):
         if launcher:
             (self.root / "HyliaBuilder-Setup.exe").write_bytes(b"new synthetic launcher")
-        with mock.patch.object(make_game, "BESIDE", ["hylia.exe"]):
+        with mock.patch.object(make_game, "BESIDE", ["hylia.exe"]), mock.patch.object(make_game, "GAME_EXE", "hylia.exe"):
             # Comprehensions use globals. Keep one namespace, as in production, and discover only authored setup files.
             namespace = dict(make_game.__dict__, built=str(self.built), out=str(self.out), work=str(self.work),
                              ROOT=str(self.root / "tools"), LINUX=False if launcher else make_game.LINUX)

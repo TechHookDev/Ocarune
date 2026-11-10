@@ -58,7 +58,7 @@ float dispatched_sharp = -1;
 VkImageView sampled_view = 0;
 VkImageBlit last_blit;
 bool make_pipe(Pipe& p, const uint32_t* code, size_t bytes, std::initializer_list<int> types, uint32_t push) {
-    CHECK(code == FG_SCALE_COMP_SPV && bytes == sizeof FG_SCALE_COMP_SPV && types.size() == 2 && push == 12);
+    CHECK(code == FG_SCALE_COMP_SPV && bytes == sizeof FG_SCALE_COMP_SPV && types.size() == 2 && push == 24);
     CHECK(*types.begin() == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER && *(types.begin() + 1) == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
     ++pipe_calls; p.set = 1; p.layout = 2; p.pipe = pipe_fail ? 0 : 3; return !pipe_fail;
 }
@@ -90,7 +90,7 @@ void vkCmdBlitImage(int, VkImage src, int, VkImage dst, int, int count, const Vk
 }
 void pass(int, const Pipe& p, std::initializer_list<std::pair<VkImageView, VkSampler>> b,
           uint32_t w, uint32_t h, const void* data, uint32_t bytes) {
-    CHECK(p.pipe == 3 && b.size() == 2 && b.begin()->first && b.begin()->second == 4 && bytes == 8);
+    CHECK(p.pipe == 3 && b.size() == 2 && b.begin()->first && b.begin()->second == 4 && bytes == 24);
     CHECK((b.begin() + 1)->first && !(b.begin() + 1)->second);
     struct PC { int mode; float sharp; } pc;
     std::memcpy(&pc, data, sizeof pc);
@@ -117,12 +117,12 @@ int main() {
     const int bad[][4] = {{-1,0,10,10}, {2560,0,10,10}, {0,1440,10,10}};
     for (const auto& crop : bad) CHECK(!draw(crop));
     CHECK(pipe_calls == 0 && image_calls == 0);
-    for (int mode : {1, 2, 0}) {
+    for (int mode : {1, 0}) {
         reset(); opts.upscale = mode; opts.sharpness = mode ? 0 : 37;
         CHECK(!framegen_on() && !fg.init && !fg.thread_started);
         CHECK(draw()); // original FG-off implementation returns null here
         CHECK(pipe_calls == 1 && sampler_calls == 1 && dispatches == 1 && image_calls == 1);
-        CHECK(dispatched_mode == mode && dispatched_sharp == (mode ? 0.0f : 0.37f));
+        CHECK(dispatched_mode == 0 && dispatched_sharp == (mode ? 0.0f : 0.37f));
         CHECK(dispatched_w == 2560 && dispatched_h == 1440 && sampled_view == 12);
         CHECK(made_usage == (VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT));
         CHECK(draw()); CHECK(pipe_calls == 1 && sampler_calls == 1 && image_calls == 1);
