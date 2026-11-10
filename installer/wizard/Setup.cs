@@ -440,6 +440,13 @@ class Setup : Form {
             float sz = S(60), gap = S(4), left = S(Pad), top = S(60), cx = left + sz + gap / 2;
             var glow = new Rectangle((int)(cx - S(150)), (int)(top - S(70)), S(300), S(300));
             using (var gp = new GraphicsPath()) { gp.AddEllipse(glow); using (var pb = new PathGradientBrush(gp) { CenterColor = Color.FromArgb(64, Gold), SurroundColors = new[] { Color.FromArgb(0, Gold) } }) g.FillPath(pb, gp); }
+            // (watermark: a large, faint triforce bleeding off the bottom of the panel)
+            using (var wb = new SolidBrush(Color.FromArgb(14, Gold))) {
+                float ws = S(120), wg = S(6), wx = Width - S(20) - ws / 2, wy = Height - S(250);
+                g.FillPolygon(wb, new[] { new PointF(wx, wy), new PointF(wx - ws / 2, wy + ws * 0.86f), new PointF(wx + ws / 2, wy + ws * 0.86f) });
+                g.FillPolygon(wb, new[] { new PointF(wx - ws / 2 - wg, wy + ws * 0.86f + wg), new PointF(wx - ws - wg, wy + ws * 1.72f + wg), new PointF(wx - wg, wy + ws * 1.72f + wg) });
+                g.FillPolygon(wb, new[] { new PointF(wx + ws / 2 + wg, wy + ws * 0.86f + wg), new PointF(wx + wg, wy + ws * 1.72f + wg), new PointF(wx + ws + wg, wy + ws * 1.72f + wg) });
+            }
             Action<PointF, PointF, PointF> tri = (a, b2, c2) => {
                 var pts = new[] { a, b2, c2 }; float y0 = Math.Min(a.Y, Math.Min(b2.Y, c2.Y)), y1 = Math.Max(a.Y, Math.Max(b2.Y, c2.Y));
                 using (var br = new LinearGradientBrush(new PointF(0, y0), new PointF(0, y1), GoldHi, GoldDk)) g.FillPolygon(br, pts);
@@ -448,7 +455,7 @@ class Setup : Form {
             tri(new PointF(tx, top), new PointF(tx - sz / 2, top + sz * 0.86f), new PointF(tx + sz / 2, top + sz * 0.86f));
             tri(new PointF(tx - sz / 2 - gap, top + sz * 0.86f + gap), new PointF(tx - sz - gap, top + sz * 1.72f + gap), new PointF(tx - gap, top + sz * 1.72f + gap));
             tri(new PointF(tx + sz / 2 + gap, top + sz * 0.86f + gap), new PointF(tx + gap, top + sz * 1.72f + gap), new PointF(tx + sz + gap, top + sz * 1.72f + gap));
-            using (var f = new Font("Segoe UI", 9, FontStyle.Bold)) TextRenderer.DrawText(g, "H  Y  L  I  A", f, new Point(S(Pad), S(216)), Gold, TextFormatFlags.NoPadding);
+            using (var f = new Font("Segoe UI", 9, FontStyle.Bold)) TextRenderer.DrawText(g, "O  C  A  R  U  N  E", f, new Point(S(Pad), S(216)), Gold, TextFormatFlags.NoPadding);
             using (var f = new Font("Georgia", 31, FontStyle.Bold)) {
                 TextRenderer.DrawText(g, "Ocarina", f, new Point(S(Pad - 2), S(240)), Txt, TextFormatFlags.NoPadding);
                 TextRenderer.DrawText(g, "of Time", f, new Point(S(Pad - 2), S(284)), Gold, TextFormatFlags.NoPadding);
