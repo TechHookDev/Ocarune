@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Newest release
+    url: https://github.com/TechHookDev/Hylia/releases/latest
+    about: Every release includes all the fixes before it. Try the newest before reporting.

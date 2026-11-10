@@ -1,0 +1,159 @@
+#version 450
+// (hylia) OoT's gameplay TAAU network (fd029a317a9a4b94) stood in for (vk_draw.cpp taau_stand_in): its input, the
+// scene colour in RGB9E5 that its first passes made, sampled with a linear filter and written to its output at the
+// output's size. The network's translation loses the blue channel (the yellow cast); this keeps the picture right at
+// the cost of its temporal anti-aliasing.
+//
+// Against one-frame flashes: the picture before (`hist`, this pass's own last output) bounds each pixel, which may
+// rise to 1.5x and fall to 0.6x of it in a frame (a light change or a camera cut settles over a few frames). Some
+// frames' scene colour blows up to white across the picture (or a light term drops out for a frame); those frames
+// came out as full-screen flashes. A NaN or infinite pixel takes the one before. pc.valid = 0 (the first frame, a
+// new size): no bound.
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(binding = 0) uniform sampler2D src;
+layout(binding = 1, r11f_g11f_b10f) uniform writeonly image2D dst;
+layout(binding = 2, r11f_g11f_b10f) uniform image2D hist;
+layout(push_constant) uniform P { ivec2 size; int valid; int mode; float sharp; } pc;
+// pc.mode (the Upscaling menu row): 0 the linear filter, 1 FSR (EASU + RCAS), 2 Lossless Scaling style (Lanczos 2 kept inside its
+// four nearest texels, so no ringing, then a sharpen that eases off on hard edges). Both run on the network's input as it
+// is, in its perceptual (square root) encoding, which is what they are made for; the square comes after.
+vec3 ld(ivec2 q) {
+    const vec3 v = texelFetch(src, clamp(q, ivec2(0), textureSize(src, 0) - 1), 0).rgb;
+    return mix(v, vec3(0.0), bvec3(isnan(v.r) || isinf(v.r), isnan(v.g) || isinf(v.g), isnan(v.b) || isinf(v.b)));
+}
+const float PI = 3.14159265;
+float lanczos2(float x) {
+    x = abs(x);
+    if (x < 1e-4) return 1.0;
+    if (x >= 2.0) return 0.0;
+    const float p = PI * x;
+    return 2.0 * sin(p) * sin(p * 0.5) / (p * p);
+}
+vec3 lanczos(vec2 uv) {
+    const ivec2 size = textureSize(src, 0);
+    const vec2 p = uv * vec2(size) - 0.5;
+    const ivec2 b = ivec2(floor(p));
+    const vec2 f = p - vec2(b);
+    vec3 sum = vec3(0.0);
+    float weight = 0.0;
+    for (int y = -1; y <= 2; y++)
+        for (int x = -1; x <= 2; x++) {
+            const float w = lanczos2(float(x) - f.x) * lanczos2(float(y) - f.y);
+            sum += w * ld(b + ivec2(x, y));
+            weight += w;
+        }
+    const vec3 t0 = ld(b), t1 = ld(b + ivec2(1, 0)), t2 = ld(b + ivec2(0, 1)), t3 = ld(b + ivec2(1, 1));
+    return clamp(sum / weight, min(min(t0, t1), min(t2, t3)), max(max(t0, t1), max(t2, t3)));
+}
+vec3 lossless(ivec2 g) {
+    const vec2 uv = (vec2(g) + 0.5) / vec2(pc.size), e = 1.0 / vec2(pc.size);
+    const vec3 c = lanczos(uv);
+    const vec3 n = lanczos(uv + vec2(0.0, -e.y)), s = lanczos(uv + vec2(0.0, e.y));
+    const vec3 w = lanczos(uv + vec2(-e.x, 0.0)), r = lanczos(uv + vec2(e.x, 0.0));
+    const vec3 lo = min(min(min(n, s), min(w, r)), c), hi = max(max(max(n, s), max(w, r)), c);
+    const float amt = pc.sharp * 2.0 * (1.0 - clamp(dot(hi - lo, vec3(0.333)) * 2.0, 0.0, 0.8));
+    return clamp(c + amt * (c - (n + s + w + r) * 0.25), lo, hi);
+}
+float luma(vec3 c) { return c.g + 0.5 * (c.r + c.b); }
+void easu_set(inout vec2 dir, inout float len, float w, float lA, float lB, float lC, float lD, float lE) {
+    const float dirX = lD - lB;
+    const float dX = max(abs(lD - lC), abs(lC - lB));
+    float lenX = dX > 0.0 ? clamp(abs(dirX) / dX, 0.0, 1.0) : 0.0;
+    lenX *= lenX;
+    const float dirY = lE - lA;
+    const float dY = max(abs(lE - lC), abs(lC - lA));
+    float lenY = dY > 0.0 ? clamp(abs(dirY) / dY, 0.0, 1.0) : 0.0;
+    lenY *= lenY;
+    dir += vec2(dirX, dirY) * w;
+    len += (lenX + lenY) * w;
+}
+void easu_tap(inout vec3 aC, inout float aW, vec2 off, vec2 dir, vec2 len, float lob, float clp, vec3 c) {
+    const vec2 v = vec2(dot(off, dir), dot(off, vec2(-dir.y, dir.x))) * len;
+    const float d2 = min(dot(v, v), clp);
+    float wB = 0.4 * d2 - 1.0;
+    const float wA = lob * d2 - 1.0;
+    wB = wB * wB;
+    wB = 1.5625 * wB - 0.5625;
+    const float w = wB * wA * wA;
+    aC += c * w;
+    aW += w;
+}
+vec3 easu(ivec2 op) {
+    const vec2 ssz = vec2(textureSize(src, 0)), dsz = vec2(pc.size);
+    vec2 pp = (vec2(op) + 0.5) * (ssz / dsz) - 0.5;
+    const vec2 fp = floor(pp);
+    pp -= fp;
+    const ivec2 f0 = ivec2(fp);
+    const vec3 bC = ld(f0 + ivec2(0, -1)), cC = ld(f0 + ivec2(1, -1));
+    const vec3 eC = ld(f0 + ivec2(-1, 0)), fC = ld(f0), gC = ld(f0 + ivec2(1, 0)), hC = ld(f0 + ivec2(2, 0));
+    const vec3 iC = ld(f0 + ivec2(-1, 1)), jC = ld(f0 + ivec2(0, 1)), kC = ld(f0 + ivec2(1, 1)), lC = ld(f0 + ivec2(2, 1));
+    const vec3 nC = ld(f0 + ivec2(0, 2)), oC = ld(f0 + ivec2(1, 2));
+    const float bL = luma(bC), cL = luma(cC), eL = luma(eC), fL = luma(fC), gL = luma(gC), hL = luma(hC);
+    const float iL = luma(iC), jL = luma(jC), kL = luma(kC), lL = luma(lC), nL = luma(nC), oL = luma(oC);
+    vec2 dir = vec2(0.0);
+    float len = 0.0;
+    easu_set(dir, len, (1.0 - pp.x) * (1.0 - pp.y), bL, eL, fL, gL, jL);
+    easu_set(dir, len, pp.x * (1.0 - pp.y), cL, fL, gL, hL, kL);
+    easu_set(dir, len, (1.0 - pp.x) * pp.y, fL, iL, jL, kL, nL);
+    easu_set(dir, len, pp.x * pp.y, gL, jL, kL, lL, oL);
+    const vec2 dir2 = dir * dir;
+    float dirR = dir2.x + dir2.y;
+    const bool zro = dirR < (1.0 / 32768.0);
+    dirR = zro ? 1.0 : inversesqrt(dirR);
+    dir = (zro ? vec2(1.0, dir.y) : dir) * dirR;
+    len = len * 0.5;
+    len *= len;
+    const float stretch = dot(dir, dir) / max(abs(dir.x), abs(dir.y));
+    const vec2 len2 = vec2(1.0 + (stretch - 1.0) * len, 1.0 - 0.5 * len);
+    const float lob = 0.5 - 0.29 * len;
+    const float clp = 1.0 / lob;
+    const vec3 min4 = min(min(fC, gC), min(jC, kC)), max4 = max(max(fC, gC), max(jC, kC));
+    vec3 aC = vec3(0.0);
+    float aW = 0.0;
+    easu_tap(aC, aW, vec2(0.0, -1.0) - pp, dir, len2, lob, clp, bC);
+    easu_tap(aC, aW, vec2(1.0, -1.0) - pp, dir, len2, lob, clp, cC);
+    easu_tap(aC, aW, vec2(-1.0, 1.0) - pp, dir, len2, lob, clp, iC);
+    easu_tap(aC, aW, vec2(0.0, 1.0) - pp, dir, len2, lob, clp, jC);
+    easu_tap(aC, aW, vec2(0.0, 0.0) - pp, dir, len2, lob, clp, fC);
+    easu_tap(aC, aW, vec2(-1.0, 0.0) - pp, dir, len2, lob, clp, eC);
+    easu_tap(aC, aW, vec2(1.0, 1.0) - pp, dir, len2, lob, clp, kC);
+    easu_tap(aC, aW, vec2(2.0, 1.0) - pp, dir, len2, lob, clp, lC);
+    easu_tap(aC, aW, vec2(2.0, 0.0) - pp, dir, len2, lob, clp, hC);
+    easu_tap(aC, aW, vec2(1.0, 0.0) - pp, dir, len2, lob, clp, gC);
+    easu_tap(aC, aW, vec2(1.0, 2.0) - pp, dir, len2, lob, clp, oC);
+    easu_tap(aC, aW, vec2(0.0, 2.0) - pp, dir, len2, lob, clp, nC);
+    const vec3 c = abs(aW) > 1e-6 ? aC / aW : fC;
+    return min(max4, max(min4, c));
+}
+// RCAS over the EASU result; the 4 neighbours are EASU'd again so it all runs in one pass
+vec3 fsr(ivec2 g) {
+    const vec3 e = easu(g);
+    if (pc.sharp <= 0.0) return e;
+    const vec3 b = easu(g + ivec2(0, -1)), d = easu(g + ivec2(-1, 0)), f = easu(g + ivec2(1, 0)), h = easu(g + ivec2(0, 1));
+    const vec3 mn4 = min(min(b, d), min(f, h)), mx4 = max(max(b, d), max(f, h));
+    const vec3 hitMin = mn4 / max(4.0 * mx4, vec3(1e-5));
+    const vec3 hitMax = (1.0 - mx4) / min(4.0 * mn4 - 4.0, vec3(-1e-5));
+    const vec3 lobeRGB = max(-hitMin, hitMax);
+    const float lobe = max(-0.1875, min(max(lobeRGB.r, max(lobeRGB.g, lobeRGB.b)), 0.0)) * min(pc.sharp * 2.0, 1.0);
+    return (lobe * (b + d + h + f) + e) / (4.0 * lobe + 1.0);
+}
+
+void main() {
+    const ivec2 g = ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(g, pc.size))) return;
+    const vec2 uv = (vec2(g) + 0.5) / vec2(pc.size);
+    // (the input is the square root of the scene colour, the network's perceptual encoding, which its output undoes:
+    // 6637ac1d's means 0.58 0.50 0.27 -> 0.77 0.69 0.49)
+    vec3 s = textureLod(src, uv, 0.0).rgb;
+    if (pc.mode == 1) s = fsr(g);
+    else if (pc.mode == 2) s = lossless(g);
+    s = max(s, vec3(0.0));
+    vec3 c = s * s;
+    if (pc.valid != 0) {
+        const vec3 p = imageLoad(hist, g).rgb;
+        c = mix(c, p, bvec3(isnan(c.r) || isinf(c.r), isnan(c.g) || isinf(c.g), isnan(c.b) || isinf(c.b)));
+        c = clamp(c, p * 0.6, p * 1.5 + 0.01);
+    }
+    imageStore(dst, g, vec4(c, 1.0));
+    imageStore(hist, g, vec4(c, 1.0));
+}
