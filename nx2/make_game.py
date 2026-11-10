@@ -39,13 +39,13 @@ BUILD_ID = "e0f3ccfa"   # (the version the patches, the hot list and the profile
 STARTED = time.time()   # (the build's total time, kept in build_times.json and said as @@times)
 sys.path[:0] = [HERE, os.path.join(ROOT, "third_party", "a64-kit", "tools")]   # (python -I leaves the script folder off)
 import toolchain as _toolchain
-# (hylia) RX_TARGET=windows on Linux: the Windows game, with llvm-mingw's Linux release (HYLIA_MINGW, or llvm-mingw
+# (ocarune) RX_TARGET=windows on Linux: the Windows game, with llvm-mingw's Linux release (OCARUNE_MINGW, or llvm-mingw
 # beside the builder), to run under Proton or copy to a Windows PC
 LINUX, CROSS = not _toolchain.windows(), _toolchain.windows() and os.name != "nt"
 # (SDL2.dll is sdl2-compat: it loads SDL3.dll from beside the exe. Left out of bin\ since v2.0.0, it said "Failed loading SDL3
 # library" three times and no controller worked: player report)
 GAME_EXE = "OcarinaOfTime.exe"
-BESIDE = ["hylia", "oot_vk.so", "libSDL2-2.0.so.0"] if LINUX else ["hylia.exe", "oot_vk.dll", "SDL2.dll", "SDL3.dll", "wgpu_native.dll"]
+BESIDE = ["ocarune", "oot_vk.so", "libSDL2-2.0.so.0"] if LINUX else ["ocarune.exe", "oot_vk.dll", "SDL2.dll", "SDL3.dll", "wgpu_native.dll"]
 LANGUAGES = [("en-US", "English (US)"), ("en-GB", "English (UK)"), ("fr", "French (France)"), ("fr-CA", "French (Canada)"), ("de", "German"),
              ("it", "Italian"), ("es", "Spanish (Spain)"), ("es-419", "Spanish (Latin America)"), ("pt-BR", "Portuguese (Brazil)"), ("nl", "Dutch"),
              ("pl", "Polish"), ("ru", "Russian"), ("ja", "Japanese"), ("ko", "Korean"), ("zh-Hans", "Chinese (Simplified)"),
@@ -154,8 +154,8 @@ KEEP_BUILDS = 20
 
 
 def times_path(work):
-    """Where the builds' times are kept: beside the object cache, in the builder's own folder (LOCALAPPDATA\\HyliaBuilder
-    on Windows, ~/.cache/hylia-builder on Linux). A builder update keeps it, so the next build still knows what this PC
+    """Where the builds' times are kept: beside the object cache, in the builder's own folder (LOCALAPPDATA\\OcaruneBuilder
+    on Windows, ~/.cache/ocarune-builder on Linux). A builder update keeps it, so the next build still knows what this PC
     took, and the one after that can compare."""
     return os.path.join(work, "build_times.json")
 
@@ -254,13 +254,13 @@ def check_modules(exefs):
                 head = f.read(16)
             if head[:4] != b"NSO0":
                 fail("The file %s in this dump is not a game module (it starts %s). Try another dump of the game, or send this message to the "
-                     "Hylia developers." % (name, head.hex()))
+                     "Ocarune developers." % (name, head.hex()))
 
 
 def check_supported_build(exefs):
     bid = build_id(os.path.join(exefs, "main"))
     if not bid.startswith(BUILD_ID):
-        fail("This is build %s. Hylia supports build %s." % (bid[:8], BUILD_ID))
+        fail("This is build %s. Ocarune supports build %s." % (bid[:8], BUILD_ID))
 
 
 def check_cache_paths(out, paths):
@@ -280,16 +280,16 @@ def check_cache_paths(out, paths):
 
 
 def check_cpu():
-    """(linux) The AppImage's Vulkan back end (HYLIA_VK_PREBUILT) is built for x86-64-v3 elsewhere
+    """(linux) The AppImage's Vulkan back end (OCARUNE_VK_PREBUILT) is built for x86-64-v3 elsewhere
     (scripts/linux/appimage.sh), while the game follows this PC (nx2/host_cpu.py): on a CPU without AVX2 it would stop at
     its start. Said now, before the game is read, not 40 minutes in (issue 363)"""
-    if not os.environ.get("HYLIA_VK_PREBUILT") or os.environ.get("RX_MARCH"):
+    if not os.environ.get("OCARUNE_VK_PREBUILT") or os.environ.get("RX_MARCH"):
         return
     sys.path.insert(0, HERE)
     from host_cpu import host_march
     m = host_march()
     if m != "x86-64-v3":
-        fail("Your processor has no AVX2 (it runs %s), and the AppImage's renderer needs it. Build Hylia from source "
+        fail("Your processor has no AVX2 (it runs %s), and the AppImage's renderer needs it. Build Ocarune from source "
              "instead (see the readme): a source build follows your processor." % m)
 
 
@@ -306,9 +306,9 @@ def check(a, work):
     else:
         bid = build_id(os.path.join(a.exefs, "main"))
     if bid.startswith(BUILD_ID):
-        say("check", "ok", "This is the version Hylia supports (build %s)." % bid[:8])
+        say("check", "ok", "This is the version Ocarune supports (build %s)." % bid[:8])
     else:
-        say("check", "bad", "This is build %s. Hylia supports build %s." % (bid[:8], BUILD_ID))
+        say("check", "bad", "This is build %s. Ocarune supports build %s." % (bid[:8], BUILD_ID))
 
 
 def visual_studio_environment():
@@ -411,8 +411,8 @@ def check_linux_compiler():
     import toolchain
     cc = toolchain.find("clang")
     if not os.path.isfile(cc):
-        fail("No C compiler was found. Install clang (and lld), or use the Hylia AppImage, which brings its own.")
-    sysroot = os.environ.get("HYLIA_SYSROOT")
+        fail("No C compiler was found. Install clang (and lld), or use the Ocarune AppImage, which brings its own.")
+    sysroot = os.environ.get("OCARUNE_SYSROOT")
     with tempfile.TemporaryDirectory() as d:
         src = os.path.join(d, "t.c")
         with open(src, "w") as f:
@@ -430,7 +430,7 @@ def requested_jobs(value):
     """The builder's explicit worker override, or None to keep its automatic selection."""
     if value is None or value == "":
         return None
-    error = "HYLIA_JOBS must be a whole number: use 1 or more, or 0 for automatic."
+    error = "OCARUNE_JOBS must be a whole number: use 1 or more, or 0 for automatic."
     try:
         jobs = int(value)
     except ValueError:
@@ -442,52 +442,52 @@ def requested_jobs(value):
 
 def default_jobs():
     """(issue 418) One compiler per CPU thread: nx2/build.py starts each one only when the memory free holds it (MemoryGate), so the
-    count no longer has to fit the biggest files in the memory free at the start. HYLIA_JOBS or --jobs choose"""
+    count no longer has to fit the biggest files in the memory free at the start. OCARUNE_JOBS or --jobs choose"""
     cpus = os.cpu_count() or 2
-    print("build: up to %d compilers at once (one per CPU thread), as the memory allows; HYLIA_JOBS=<n> to change" % cpus, flush=True)
+    print("build: up to %d compilers at once (one per CPU thread), as the memory allows; OCARUNE_JOBS=<n> to change" % cpus, flush=True)
     return cpus
 
 
 def chosen_jobs(given):
-    """--jobs when it is given (1 or more), else HYLIA_JOBS, else what default_jobs chooses: worked out only when it is
+    """--jobs when it is given (1 or more), else OCARUNE_JOBS, else what default_jobs chooses: worked out only when it is
     needed, so the "compilers at once" line is the number the build uses"""
     if given:
         return given
     try:
-        return requested_jobs(os.environ.get("HYLIA_JOBS")) or default_jobs()
+        return requested_jobs(os.environ.get("OCARUNE_JOBS")) or default_jobs()
     except ValueError as e:
         fail(str(e))
 
 
 def bundled_mingw():
     """(as TotK Recomp's installer) llvm-mingw in the tools folder: its clang, headers and libraries build the game, and nothing of
-    Visual Studio or the Windows SDK is needed. HYLIA_MINGW set already wins; HYLIA_MSVC=1: the Visual Studio route"""
-    if LINUX or os.environ.get("HYLIA_MSVC") == "1":
-        return os.environ.get("HYLIA_MINGW", "")
-    if not os.environ.get("HYLIA_MINGW"):
+    Visual Studio or the Windows SDK is needed. OCARUNE_MINGW set already wins; OCARUNE_MSVC=1: the Visual Studio route"""
+    if LINUX or os.environ.get("OCARUNE_MSVC") == "1":
+        return os.environ.get("OCARUNE_MINGW", "")
+    if not os.environ.get("OCARUNE_MINGW"):
         here = os.path.join(ROOT, "llvm-mingw")
         if os.path.isfile(os.path.join(here, "bin", "clang" + (".exe" if os.name == "nt" else ""))):
-            os.environ["HYLIA_MINGW"] = here
+            os.environ["OCARUNE_MINGW"] = here
         elif os.path.isdir(here):
             # (the folder is there and its compiler is not: an antivirus took it (false positives on unsigned tools), or the
             # zip was not unpacked whole. It went on to the Visual Studio route and said "The Windows SDK was not found")
             missing = [n for n in ("clang.exe", "clang++.exe", "ld.lld.exe")
                        if not os.path.isfile(os.path.join(here, "bin", n))]
             fail("Files of the builder's own compiler are missing (%s in %s). Your antivirus most likely removed them "
-                 "(a false alarm on unsigned programs): restore them from its quarantine or allow the Hylia Builder folder, "
-                 "then unzip HyliaBuilder.zip again and build. Visual Studio is not needed."
+                 "(a false alarm on unsigned programs): restore them from its quarantine or allow the Ocarune Builder folder, "
+                 "then unzip OcaruneBuilder.zip again and build. Visual Studio is not needed."
                  % (", ".join(missing) or "bin", os.path.join(here, "bin")))
-    return os.environ.get("HYLIA_MINGW", "")
+    return os.environ.get("OCARUNE_MINGW", "")
 
 
 def check_mingw():
     """The bundled compiler builds and links a Windows program: found now, not 40 minutes in"""
     sys.path.insert(0, os.path.join(ROOT, "third_party", "a64-kit", "tools"))
     import toolchain
-    cc = toolchain.find("clang")   # (HYLIA_MINGW's, else the one toolchain.py finds: the same as the build uses)
-    if not os.path.isfile(cc):   # (HYLIA_MINGW set to a folder without the compiler: said here, not as a silent SystemExit)
-        fail("The builder's own compiler was not found at %s. Set HYLIA_MINGW to an llvm-mingw folder, or unpack the "
-             "Hylia Builder zip again into a folder your antivirus allows." % cc)
+    cc = toolchain.find("clang")   # (OCARUNE_MINGW's, else the one toolchain.py finds: the same as the build uses)
+    if not os.path.isfile(cc):   # (OCARUNE_MINGW set to a folder without the compiler: said here, not as a silent SystemExit)
+        fail("The builder's own compiler was not found at %s. Set OCARUNE_MINGW to an llvm-mingw folder, or unpack the "
+             "Ocarune Builder zip again into a folder your antivirus allows." % cc)
     with tempfile.TemporaryDirectory() as d:
         src = os.path.join(d, "t.c")
         with open(src, "w") as f:
@@ -499,7 +499,7 @@ def check_mingw():
         errors = [l for l in r.stderr.splitlines() if "error" in l]
         fail("The builder's own compiler (tools/llvm-mingw) could not build a test program: %s. Unpack the zip again into a folder "
              "your antivirus allows." % (errors[0] if errors else "no message"))
-    print("the compiler: %s (no Visual Studio needed)" % os.environ["HYLIA_MINGW"], flush=True)
+    print("the compiler: %s (no Visual Studio needed)" % os.environ["OCARUNE_MINGW"], flush=True)
 
 
 def check_windows_sdk():
@@ -510,13 +510,13 @@ def check_windows_sdk():
         return check_mingw()
     if CROSS:
         fail("Building for Windows on Linux needs llvm-mingw: unpack its Linux release (github.com/mstorsjo/llvm-mingw) and set "
-             "HYLIA_MINGW to its folder.")
+             "OCARUNE_MINGW to its folder.")
     sys.path.insert(0, os.path.join(ROOT, "third_party", "a64-kit", "tools"))
     import toolchain
     cc = toolchain.find("clang")
     if not os.path.isfile(cc):   # (toolchain.need() would raise SystemExit, which the builder cannot show: said in its protocol)
         fail("No C compiler was found. Install clang (and lld) and put it on PATH, set EMSDK to an emsdk checkout, or set "
-             "HYLIA_MINGW to an llvm-mingw folder. (%s)" % cc)
+             "OCARUNE_MINGW to an llvm-mingw folder. (%s)" % cc)
     # (an INCLUDE set for the whole machine, by an old Visual Studio or another tool, is all clang reads: without the Windows SDK's C
     # library in it, it is dropped and the compiler looks for Visual Studio itself. Issues 80 and 89)
     for k in [n for n in os.environ if n.upper() == "INCLUDE"]:
@@ -626,7 +626,7 @@ def _drop_stale_linux(work):
     bytes, not that path, so an update reuses the compiled game when the headers did not change (the Windows stamp leaves
     the builder's install folder out for the same reason, issue 565)."""
     import hashlib
-    sysroot = os.environ.get("HYLIA_SYSROOT", "")
+    sysroot = os.environ.get("OCARUNE_SYSROOT", "")
     stdio = os.path.join(sysroot, "usr", "include", "stdio.h") if sysroot else "/usr/include/stdio.h"
     try:
         body = open(stdio, "rb").read()
@@ -706,7 +706,7 @@ def drop_stale_objects(work):
     olds = {stamp_for(mine)}
     if os.path.basename(versions).lower() == "versions" and os.path.isdir(versions):
         for v in os.listdir(versions):
-            olds.add(stamp_for(os.path.normcase(os.path.join(versions, v, "HyliaBuilder", "tools")).lower()))
+            olds.add(stamp_for(os.path.normcase(os.path.join(versions, v, "OcaruneBuilder", "tools")).lower()))
     if had and had in olds:
         print("the system headers are the same as the last build's (an earlier version of the builder): its objects are reused", flush=True)
         with open(note, "w") as f:
@@ -721,12 +721,12 @@ def drop_stale_objects(work):
 
 
 def seed_pipelines(out):
-    """The pipelines recorded on the development PC (hylia_pipelines_seed.bin in the tools: program keys and draw states, no game
+    """The pipelines recorded on the development PC (ocarune_pipelines_seed.bin in the tools: program keys and draw states, no game
     code), as the game folder's list, so its first start builds them before the title, as TotK Recomp's shipped shader list does,
     instead of compiling each when it is first drawn (the stutter of a first visit). Each release ships the list its own build
     made: the file's first 8 bytes are that build's stamp, and a list the folder has from the same build is kept (it grows as
     the player plays)"""
-    seed = os.path.join(ROOT, "hylia_pipelines_seed.bin")
+    seed = os.path.join(ROOT, "ocarune_pipelines_seed.bin")
     dst = os.path.join(out, "oot_pipelines.bin")
     if not os.path.isfile(seed):
         return
@@ -863,9 +863,9 @@ def parse_args():
     p.add_argument("--exefs")
     p.add_argument("--out")
     p.add_argument("--work", default=os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"),
-                                                  "hylia-builder-windows" if CROSS else "hylia-builder")   # (the objects apart)
-                   if os.name != "nt" else os.path.join(os.environ.get("LOCALAPPDATA", ROOT), "HyliaBuilder"))
-    # (HYLIA_JOBS: fewer compilers on a PC short of memory; the AppImage's builds pass no --jobs)
+                                                  "ocarune-builder-windows" if CROSS else "ocarune-builder")   # (the objects apart)
+                   if os.name != "nt" else os.path.join(os.environ.get("LOCALAPPDATA", ROOT), "OcaruneBuilder"))
+    # (OCARUNE_JOBS: fewer compilers on a PC short of memory; the AppImage's builds pass no --jobs)
     p.add_argument("--jobs", type=int)
     p.add_argument("--language", default="en-US", help="the game's language: a code from LANGUAGES, written to language.txt")
     p.add_argument("--check", action="store_true")
@@ -909,11 +909,11 @@ def main(a=None):
 
     say("stage", "read", "Reading your game files")
     shutil.rmtree(exefs, ignore_errors=True)
-    kept = os.path.join(out, ".hylia_exefs")   # (the game's code as read, kept in the folder: what an update builds from again)
+    kept = os.path.join(out, ".ocarune_exefs")   # (the game's code as read, kept in the folder: what an update builds from again)
     if a.update:
         if not os.path.isdir(kept) or not os.path.isdir(romfs):
             fail("This game folder has no copy of the game files to update from: it was built before updates came in. Choose your game files "
-                 "in Hylia Builder and build into the same folder once; updates after that work by themselves.")
+                 "in Ocarune Builder and build into the same folder once; updates after that work by themselves.")
         check_cache_paths(out, (kept, romfs))
         shutil.copytree(kept, exefs)
         check_modules(exefs)
@@ -921,7 +921,7 @@ def main(a=None):
         # (what an earlier build left is not kept without a reason to trust it: builders before the compressed .nup fix wrote those files as
         # they lay, so a folder they left held broken game data, and the game crashed at start over its empty dictionaries)
         game = os.path.join(out, ".game")
-        good = os.path.join(out, ".hylia_romfs")
+        good = os.path.join(out, ".ocarune_romfs")
         check_cache_paths(out, (game, good, kept, romfs))
         # (an update of the builder over the same .nup: nothing to read again, only what the build needs. Issues 21 and 28)
         st = os.stat(a.nup)
@@ -962,7 +962,7 @@ def main(a=None):
     check_supported_build(exefs)
 
     # (made once on the development PC: lists of addresses and counts, no game code)
-    for name in ("hot_funcs.txt", "hot_order.txt", "hylia_pieces.prof", "hylia.res"):
+    for name in ("hot_funcs.txt", "hot_order.txt", "ocarune_pieces.prof", "ocarune.res"):
         src = os.path.join(ROOT, "work", name)
         dst = os.path.join(work, name)
         # (copied only when it differs: a compiler still ending from a cancelled build keeps the profile mapped, WinError 1224)
@@ -975,8 +975,8 @@ def main(a=None):
     env = {"OOT_WORK": work, "OOT_EXEFS": exefs, "OOT_ROMFS": romfs, "OOT_DUMP": out, "RX_RELEASE": "1", "A64_HOT_CHUNK": "1"}
     if os.path.exists(os.path.join(work, "hot_funcs.txt")):
         env["A64_HOT_FUNCS"] = os.path.join(work, "hot_funcs.txt")
-    if os.path.exists(os.path.join(work, "hylia_pieces.prof")) and profile_readable(os.path.join(work, "hylia_pieces.prof")):
-        env["RX_PGO"] = os.path.join(work, "hylia_pieces.prof")
+    if os.path.exists(os.path.join(work, "ocarune_pieces.prof")) and profile_readable(os.path.join(work, "ocarune_pieces.prof")):
+        env["RX_PGO"] = os.path.join(work, "ocarune_pieces.prof")
 
     say("stage", "lift", "Translating the game to PC code")
     # (the same game, tools and settings as the lift before: its C is what this lift would write, and nothing recompiles from it. A
@@ -997,7 +997,7 @@ def main(a=None):
         check_linux_compiler()
     # (the compile's timer: build.py reads the record of the earlier builds on this PC, says which files this run really
     # rebuilds and how long the rest will take, and reports each module's seconds; they go into the record below)
-    env["HYLIA_TIMES"] = times_path(work)
+    env["OCARUNE_TIMES"] = times_path(work)
     run_files, plan = {}, [0, 0]
     say("stage", "compile", "Compiling")
     compile_started = time.time()
@@ -1048,18 +1048,18 @@ def main(a=None):
     say("stage", "finish", "Putting the game folder together")
     built = os.path.join(work, "sa", "build")
     # (the new files are copied in beside the old ones as <name>.new and swapped in only once all are complete: a build stopped while
-    # copying, or a full disk, left a half-written 460 MB hylia.exe and no game to play. The old game stays playable until the swap)
-    # (Windows) hylia.exe in the folder is the game's launcher: the builder's small setup, which opens the installed builder as a
+    # copying, or a full disk, left a half-written 460 MB ocarune.exe and no game to play. The old game stays playable until the swap)
+    # (Windows) ocarune.exe in the folder is the game's launcher: the builder's small setup, which opens the installed builder as a
     # launcher for this folder (Play, and Update left of it when a newer release is out: builder/setup/setup.c launch mode), or starts
     # the game when no builder is installed. The game and its DLLs are in bin\; its files (image.bin, romfs, saves, settings, caches)
-    # stay in the folder (host/hos_paths.h). Without the setup (a development build) the game stays hylia.exe in the folder
+    # stay in the folder (host/hos_paths.h). Without the setup (a development build) the game stays ocarune.exe in the folder
     staged = []
-    # (Linux) the same launcher, as a script, when this is a packaged builder (the AppImage sets HYLIA_TOOLS). A source
-    # checkout leaves hylia in the folder, as a development build on Windows does when the setup exe is not beside it
-    launcher = os.path.join(os.path.dirname(os.path.abspath(ROOT)), "HyliaBuilder-Setup.exe")
+    # (Linux) the same launcher, as a script, when this is a packaged builder (the AppImage sets OCARUNE_TOOLS). A source
+    # checkout leaves ocarune in the folder, as a development build on Windows does when the setup exe is not beside it
+    launcher = os.path.join(os.path.dirname(os.path.abspath(ROOT)), "OcaruneBuilder-Setup.exe")
     if LINUX:
-        script = os.path.join(ROOT, "builder", "linux", "hylia-folder")
-        launcher = script if os.environ.get("HYLIA_TOOLS") and os.path.isfile(script) else None
+        script = os.path.join(ROOT, "builder", "linux", "ocarune-folder")
+        launcher = script if os.environ.get("OCARUNE_TOOLS") and os.path.isfile(script) else None
     else:
         launcher = launcher if os.path.isfile(launcher) else None
     game_dir = os.path.join(out, "bin") if launcher else out
@@ -1067,7 +1067,7 @@ def main(a=None):
     ffmpeg_dlls = [] if LINUX else sorted(f for f in os.listdir(built) if f.endswith(".dll") and f.startswith(("av", "sw")))
     for n in BESIDE + ffmpeg_dlls:
         src = os.path.join(built, n)
-        if os.path.exists(src):   # (the exe is built as hylia.exe and installed as GAME_EXE)
+        if os.path.exists(src):   # (the exe is built as ocarune.exe and installed as GAME_EXE)
             staged.append((src, os.path.join(game_dir, GAME_EXE if n == BESIDE[0] and not LINUX else n)))
     staged.append((os.path.join(work, "sa", "image", "image.bin"), os.path.join(out, "image.bin")))
     if launcher:
@@ -1085,21 +1085,21 @@ def main(a=None):
         try:
             os.replace(dst + ".new", dst)   # (linux: a running copy keeps its own file; windows: a running exe cannot be replaced)
         except PermissionError:
-            fail("Could not replace %s. Close any running copy of Hylia and check that the file and folder are writable, then retry. "
+            fail("Could not replace %s. Close any running copy of Ocarune and check that the file and folder are writable, then retry. "
                  "Staged replacements remain beside the installed files; the compiled source remains at %s." % (dst, src))
     # (files of the earlier naming: the old exe and DLL go, the player's settings and caches keep their contents under the new names)
     if not LINUX:
-        for old in ("hylia.exe", "hylia_vk.dll", "hylia.map"):
+        for old in ("ocarune.exe", "ocarune_vk.dll", "ocarune.map"):
             if old != GAME_EXE and os.path.isfile(os.path.join(out, old)) and not launcher:
                 try: os.remove(os.path.join(out, old))
                 except OSError: pass
         for old in ("options.ini", "env.txt", "pipelines.bin", "programs.bin", "programs.idx", "shaders.bin", "prepared.bin"):
-            o, n = os.path.join(out, "hylia_" + old), os.path.join(out, "oot_" + old)
+            o, n = os.path.join(out, "ocarune_" + old), os.path.join(out, "oot_" + old)
             if os.path.isfile(o) and not os.path.exists(n):
                 os.replace(o, n)
-    if launcher:   # (a folder built before the launcher: its libraries left the folder for bin\; hylia is the launcher now)
+    if launcher:   # (a folder built before the launcher: its libraries left the folder for bin\; ocarune is the launcher now)
         stale = [] if LINUX else sorted(f for f in os.listdir(out) if f.endswith(".dll") and f.startswith(("av", "sw")))
-        for n in BESIDE[1:] + stale + ["hylia.map", "hylia-game.exe"]:
+        for n in BESIDE[1:] + stale + ["ocarune.map", "ocarune-game.exe"]:
             try:
                 if os.path.isfile(os.path.join(out, n)):
                     os.remove(os.path.join(out, n))
@@ -1109,9 +1109,9 @@ def main(a=None):
     # as it meets them: not worth stopping a finished build for
     if run(shader_census_cmd(romfs, os.path.join(out, "oot_shaders.bin")), check=False, output=sys.stderr):
         print("the shader list was not made: the game will compile its shaders as it plays", flush=True)
-    icon = os.path.join(ROOT, "assets", "hylia.png")
+    icon = os.path.join(ROOT, "assets", "ocarune.png")
     if LINUX and os.path.exists(icon):   # (the window's icon: host/posix/display_sdl.c)
-        shutil.copy2(icon, os.path.join(out, "hylia.png"))
+        shutil.copy2(icon, os.path.join(out, "ocarune.png"))
     seed_pipelines(out)
     env_file = os.path.join(out, "oot_env.txt")   # (the settings found to play best on this port; a player's own file is left alone)
     if not LINUX and not os.path.exists(env_file):
@@ -1141,8 +1141,8 @@ def main(a=None):
     if tag:
         with open(os.path.join(out, "oot_version.txt"), "w", encoding="utf-8", newline="\n") as f:
             f.write("version=%s\n" % tag)
-            if os.environ.get("HYLIA_BUILDER_EXE"):
-                f.write("builder=%s\n" % os.environ["HYLIA_BUILDER_EXE"])
+            if os.environ.get("OCARUNE_BUILDER_EXE"):
+                f.write("builder=%s\n" % os.environ["OCARUNE_BUILDER_EXE"])
     # (the game's code as read: written again by every build, so not left behind in the work folder. The translated code (sa\gen)
     # and the compiled objects stay: the next build skips the lift when nothing it reads changed (#428) and compiles only what
     # changed; the builder says how much stays and lets it go. Kept in a development checkout)
@@ -1181,7 +1181,7 @@ def cli():
             import traceback
             print(traceback.format_exc(), flush=True)
             say("error", "The builder stopped on an error it did not expect: %s: %s. Please send the text under Show details to the "
-                "Hylia issues page." % (type(e).__name__, str(e)[:300]))
+                "Ocarune issues page." % (type(e).__name__, str(e)[:300]))
             sys.exit(1)
 
 

@@ -1,4 +1,4 @@
-"""A program cache record is read within its own bytes (hylia_programs.bin).
+"""A program cache record is read within its own bytes (ocarune_programs.bin).
 
 A record whose counts ran past its end was read on into the heap until an unmapped page: a crash at start in
 program_cache_load. The Reader of gpu/vk/vk_shader.cpp is compiled here on its own (with AddressSanitizer when the
@@ -92,7 +92,7 @@ class ProgramCacheReaderTests(unittest.TestCase):
         if not compiler:
             self.skipTest("no C++ compiler")
         reader = block(SOURCE.read_text(encoding="utf-8"), "struct Reader {")
-        with tempfile.TemporaryDirectory(prefix="hylia-program-cache-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="ocarune-program-cache-") as tmp:
             src, binary = Path(tmp) / "t.cpp", Path(tmp) / "t"
             src.write_text(TEST.replace("READER", reader), encoding="utf-8")
             base = [compiler, "-std=c++20", "-Wall", "-Wextra", "-O1", "-g", str(src), "-o", str(binary)]

@@ -19,7 +19,7 @@ def tree(root, eol):
 
 
 def main():
-    os.environ.pop("HYLIA_VERSION", None)
+    os.environ.pop("OCARUNE_VERSION", None)
     with tempfile.TemporaryDirectory() as lf, tempfile.TemporaryDirectory() as crlf:
         tree(lf, "\n")
         tree(crlf, "\r\n")
@@ -32,14 +32,14 @@ def main():
         with open(os.path.join(lf, "VERSION"), "w") as f:
             f.write("movie-sync\nignored second line\n")
         assert version.release(lf) == "movie-sync"
-        os.environ["HYLIA_VERSION"] = "from-env"
-        assert version.release(lf) == "from-env", "HYLIA_VERSION comes first"
+        os.environ["OCARUNE_VERSION"] = "from-env"
+        assert version.release(lf) == "from-env", "OCARUNE_VERSION comes first"
 
-        os.environ["HYLIA_VERSION"] = 'v1 "quoted" \\ & | %PATH%'
+        os.environ["OCARUNE_VERSION"] = 'v1 "quoted" \\ & | %PATH%'
         d = version.describe(lf)
         assert not set(d) & set('"\\&|%'), d
-        assert version.define(lf).startswith('-DHYLIA_VERSION="') and version.define(lf).endswith(')"')
-        os.environ.pop("HYLIA_VERSION")
+        assert version.define(lf).startswith('-DOCARUNE_VERSION="') and version.define(lf).endswith(')"')
+        os.environ.pop("OCARUNE_VERSION")
     print("version: ok (%s)" % version.describe())
 
 

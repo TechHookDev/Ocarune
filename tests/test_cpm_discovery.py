@@ -16,7 +16,7 @@ SOURCE = Path(__file__).resolve().parents[1] / "nx2" / "build.py"
 
 class CpmDiscoveryTests(unittest.TestCase):
     def setUp(self):
-        temporary = tempfile.TemporaryDirectory(prefix="hylia-cpm-fixture-")
+        temporary = tempfile.TemporaryDirectory(prefix="ocarune-cpm-fixture-")
         self.addCleanup(temporary.cleanup)
         self.base = Path(temporary.name)
         self.tools = self.base / "portable builder \u03a9" / "tools"
@@ -52,7 +52,7 @@ class CpmDiscoveryTests(unittest.TestCase):
         with (mock.patch.dict(sys.modules, {"kit": kit, "rtgen": types.ModuleType("rtgen"),
                                            "toolchain": toolchain}),
               mock.patch.object(sys, "path", list(sys.path)),
-              mock.patch.dict(os.environ, {"RX_CPM": str(override), "HYLIA_FFMPEG": ""}),
+              mock.patch.dict(os.environ, {"RX_CPM": str(override), "OCARUNE_FFMPEG": ""}),
               mock.patch.object(subprocess, "run", side_effect=no_process),
               mock.patch.object(subprocess, "Popen", side_effect=AssertionError("Unexpected process launch"))):
             spec = importlib.util.spec_from_file_location("cpm_build_fixture", SOURCE)

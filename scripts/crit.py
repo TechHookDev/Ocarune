@@ -3,7 +3,7 @@ and renderer thread, "<ms> <name>|<frames>" (module+offset, leaf first).
 
     python -I scripts/crit.py work/runs/<run>_all.txt [top]
 
-A thread is running at an instant when its leaf is in hylia.exe or oot_vk.dll (game code, the runtime, the
+A thread is running at an instant when its leaf is in ocarune.exe or oot_vk.dll (game code, the runtime, the
 renderer), blocked otherwise (the leaf in ntdll, win32u, KERNELBASE, the driver). Prints each thread's running share;
 then for the instants when no game thread runs (the frame waits on something outside the game's CPU work): what each
 thread waits in and what the renderer's threads do; then for the instants when the main thread is blocked: how many
@@ -14,7 +14,7 @@ import collections, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import prof  # noqa: E402
 
-RUN_MODS = ("hylia.exe", "oot_vk.dll")
+RUN_MODS = ("ocarune.exe", "oot_vk.dll")
 
 
 def main():

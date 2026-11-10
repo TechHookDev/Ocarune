@@ -1,6 +1,6 @@
 # Architecture
 
-Hylia turns the Switch 2 *Ocarina of Time* into a native Windows program, once, on your PC. Nothing is emulated at run
+Ocarune turns the Switch 2 *Ocarina of Time* into a native Windows program, once, on your PC. Nothing is emulated at run
 time.
 
 ```

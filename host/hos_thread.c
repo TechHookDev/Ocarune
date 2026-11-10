@@ -37,7 +37,7 @@ struct HosThread {
     volatile int vc_kick;
     int64_t vc_since;
     CONDITION_VARIABLE vc_cv;
-    /* (hylia) fibers: the context running now (NULL: ctx, the thread's own), the thread's host fiber once it
+    /* (ocarune) fibers: the context running now (NULL: ctx, the thread's own), the thread's host fiber once it
        switched to a guest fiber */
     Ctx *volatile run_ctx;
     void *host_fiber;
@@ -278,7 +278,7 @@ static void setup_guest(HosThread *t) {
     G64(t->tlr + 0x1F8) = t->guest_tt;
     t->kernel_handle = (uint32_t)InterlockedIncrement(&next_handle);
     G32(t->guest_tt + TT_HANDLE) = t->kernel_handle;
-    /* (hylia) SDK 22's InternalCriticalSection::IsLockedByCurrentThread reads the owner handle from TLR+0x110
+    /* (ocarune) SDK 22's InternalCriticalSection::IsLockedByCurrentThread reads the owner handle from TLR+0x110
        directly (SDK 21: ThreadType+0x1B0 through TLR+0x1F8). Left 0, every free mutex looked held by the caller
        and the first heap lock aborted in pthread_mutex_lock. */
     G32(t->tlr + 0x110) = t->kernel_handle;
@@ -681,7 +681,7 @@ HLE(_ZN2nn2os12CreateThreadEPNS0_10ThreadTypeEPFvPvES3_S3_mi) {
 }
 
 /* nn::os::CreateThread(ThreadType*, void (*)(void*), void* arg, void* stack, unsigned long size, int prio,
-   int idealCore) (hylia: OoT's Porter thread pool uses this overload; left to the guest SDK it reached
+   int idealCore) (ocarune: OoT's Porter thread pool uses this overload; left to the guest SDK it reached
    ThreadManagerImplByHorizon::MapAliasStack, which needs svcMapMemory, and aborted) */
 HLE(_ZN2nn2os12CreateThreadEPNS0_10ThreadTypeEPFvPvES3_S3_mii) {
     HOS_TRACE_CALL("CreateThread");
@@ -780,7 +780,7 @@ void hos_sleep_logged(int64_t ns, uint64_t lr) {
     ReleaseSRWLockExclusive(&lk);
 }
 
-/* (hylia) OoT's present waits for its frame's GPU work by polling an NVN event, sleeping ~1.6 ms between looks
+/* (ocarune) OoT's present waits for its frame's GPU work by polling an NVN event, sleeping ~1.6 ms between looks
    (0x80590500: `while (nvnEventGetValue(e) != 1) SleepThread(...)`, ~3.5 sleeps a frame, 2 ms each on Windows): the
    frame noticed the GPU's signal late, ~7 ms of the 25 ms frame asleep on its critical path. The GPU writes the event
    into guest memory itself, so the sleep looks at it between yields (its virtual core given up) and ends once it is
@@ -816,7 +816,7 @@ static int present_poll(Ctx *c, int64_t ns) {
 }
 HLE(_ZN2nn2os11SleepThreadENS_8TimeSpanE) {
     if (present_poll(c, (int64_t)ARG(0))) return;
-    if (c->x[30] == 0x80590520 && getenv("HOS_SLEEP_LOG")) {   /* (hylia, diagnostic: OoT's present poll) */
+    if (c->x[30] == 0x80590520 && getenv("HOS_SLEEP_LOG")) {   /* (ocarune, diagnostic: OoT's present poll) */
         static int logged;
         if (logged++ < 3) {
             const char *hos_hostcall_name(uint64_t addr);
@@ -877,13 +877,13 @@ HLE(_ZN2nn2os13GetSystemTickEv) {
     static int on = -1;
     if (on < 0) on = getenv("HOS_TICK_LOG") != NULL;
     if (on) tick_log(c->x[30]);
-    /* (hylia) The graphics module: x19 at its frame-end clock read (main+0x346c770 is after the bl), for nn_vi.c's
+    /* (ocarune) The graphics module: x19 at its frame-end clock read (main+0x346c770 is after the bl), for nn_vi.c's
        real-time step */
     if (c->x[30] == 0x8348c770) hos_gfx_module = c->x[19];
     RET(hos_ticks());
 }
 HLE(_ZN2nn2os22GetSystemTickFrequencyEv) { RET(HOS_TICK_HZ); }
-/* (hylia) At the counter's own rate, HOS_TICK_HZ (31.25 MHz: 32 ns a tick). These converted at the Switch 1's
+/* (ocarune) At the counter's own rate, HOS_TICK_HZ (31.25 MHz: 32 ns a tick). These converted at the Switch 1's
    19.2 MHz (ticks = ns * 12 / 625) while GetSystemTick counts 31.25 MHz, so a tick span came out 1.63x too long: OoT's
    present slept 1.63 ms for its 1 ms poll step (0x80590500: SleepThread(ConvertToTimeSpan(frequency / 1000))), and
    any of its timing through these was off by as much. HOS_TICK_CONVERT_192=1: as before */
@@ -903,7 +903,7 @@ HLE(_ZN2nn2os17ConvertToTimeSpanENS0_4TickE) {
     RET(t * (int64_t)(1000000000ULL / HOS_TICK_HZ));
 }
 
-/* ---- fibers (hylia: nn::async's FiberTaskCoordinator, on OoT's nn.npln threads) ----------------------------
+/* ---- fibers (ocarune: nn::async's FiberTaskCoordinator, on OoT's nn.npln threads) ----------------------------
    A guest fiber is a Win32 fiber with its own guest context: the lifted frames on its host stack keep using that
    context wherever it runs, so a fiber may resume on another thread. Switching in, it takes the running thread's
    identity (TLS registers, host thread object); the thread's own context stays in HosThread.ctx. The fiber function

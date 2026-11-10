@@ -230,7 +230,7 @@ static DWORD WINAPI display_main(void *p) {
     return 0;
 }
 
-/* (hylia) The game's first work for the GPU waits for the renderer. It ran beside the renderer's start, and what it submitted while the
+/* (ocarune) The game's first work for the GPU waits for the renderer. It ran beside the renderer's start, and what it submitted while the
    shaders were being prepared (80 s on a first start) was lost: that run had no ambient light, black foliage and dark characters. The
    game itself goes on starting as it did: held at the start instead, it left holes in the ground */
 void hos_renderer_wait(void) {

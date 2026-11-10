@@ -1,6 +1,6 @@
 # Development
 
-Hylia is a static recompilation of the Switch 2 *Ocarina of Time*. How it fits together: [design.md](design.md).
+Ocarune is a static recompilation of the Switch 2 *Ocarina of Time*. How it fits together: [design.md](design.md).
 It builds on [a64-kit](../third_party/a64-kit) by NotRexed, [Eden](https://git.eden-emu.dev/eden-emu/eden)'s shader
 recompiler and suyu's decoders (see [NOTICE.md](../NOTICE.md)).
 
@@ -20,7 +20,7 @@ everything from the repository root with `python -I`.
 | `python -I nx2/make_game.py --nup <file.nup> --out <folder>` | the whole pipeline: check, unpack, lift, build, install |
 | `python -I nx2/make_game.py --update <folder>` | rebuild an installed game from the sources (keeps saves and settings) |
 | `python -I nx2/make_game.py --check --nup <file.nup>` | only check the file is the right title, update and build |
-| `python -I nx2/build.py --standalone --jobs 4` | compile `work/sa/build` (`hylia.exe`, `oot_vk.dll`, installed as `OcarinaOfTime.exe`) |
+| `python -I nx2/build.py --standalone --jobs 4` | compile `work/sa/build` (`ocarune.exe`, `oot_vk.dll`, installed as `OcarinaOfTime.exe`) |
 | `python -I tests/run_all.py` | all tests |
 | `python -I scripts/prof.py <stacks file>` | profile sampled with `HOS_SAMPLE=<thread>` and `HOS_SAMPLE_FILE=<file>` |
 

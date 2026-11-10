@@ -13,7 +13,7 @@ import unittest
 from unittest import mock
 
 
-SOURCE = Path(os.environ.get("HYLIA_CACHE_TEST_SOURCE", Path(__file__).resolve().parents[1] / "nx2" / "make_game.py"))
+SOURCE = Path(os.environ.get("OCARUNE_CACHE_TEST_SOURCE", Path(__file__).resolve().parents[1] / "nx2" / "make_game.py"))
 spec = importlib.util.spec_from_file_location("make_game_under_test", SOURCE)
 make_game = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(make_game)
@@ -36,7 +36,7 @@ def module_bytes(supported=True, payload=b"new authored module"):
 
 class NupCacheTests(unittest.TestCase):
     def setUp(self):
-        self.temporary = tempfile.TemporaryDirectory(prefix="hylia-cache-test-")
+        self.temporary = tempfile.TemporaryDirectory(prefix="ocarune-cache-test-")
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name).resolve()
         self.out = self.root / "output"
@@ -50,9 +50,9 @@ class NupCacheTests(unittest.TestCase):
         self.new_nup.write_bytes(b"new authored input of a different size")
         (self.out / "romfs").mkdir()
         (self.out / "romfs" / "asset.txt").write_bytes(b"old authored assets")
-        (self.out / ".hylia_exefs").mkdir()
-        (self.out / ".hylia_exefs" / "main").write_bytes(module_bytes(payload=b"old authored module"))
-        self.marker = self.out / ".hylia_romfs"
+        (self.out / ".ocarune_exefs").mkdir()
+        (self.out / ".ocarune_exefs" / "main").write_bytes(module_bytes(payload=b"old authored module"))
+        self.marker = self.out / ".ocarune_romfs"
         self.marker.write_text(self.stamp(self.old_nup) + "\n")
         save = self.out / "user" / "save"
         save.mkdir(parents=True)
@@ -125,7 +125,7 @@ class NupCacheTests(unittest.TestCase):
         self.assertEqual(self.extractions, [self.new_nup])
         self.assertEqual((self.out / "romfs" / "asset.txt").read_bytes(), b"new authored assets")
         self.assertTrue((self.out / "romfs" / "new-only.txt").is_file())
-        self.assertEqual((self.out / ".hylia_exefs" / "main").read_bytes(), module_bytes())
+        self.assertEqual((self.out / ".ocarune_exefs" / "main").read_bytes(), module_bytes())
         self.assertEqual(self.marker.read_text(), self.stamp(self.new_nup) + "\n")
         self.assertEqual((self.out / "user/save/sentinel.txt").read_bytes(), b"authored save sentinel")
 
@@ -136,7 +136,7 @@ class NupCacheTests(unittest.TestCase):
         self.assertEqual(self.extractions, [])
         self.assertEqual(self.cache(), before)
         self.assertEqual((self.work / "exefs/main").read_bytes(),
-                         (self.out / ".hylia_exefs/main").read_bytes())
+                         (self.out / ".ocarune_exefs/main").read_bytes())
 
     def test_failed_extraction_preserves_the_previous_cache_and_save(self):
         before = self.cache()
@@ -151,7 +151,7 @@ class NupCacheTests(unittest.TestCase):
             self.run_to_lift(self.new_nup, supported=False)
         self.assertEqual(self.extractions, [self.new_nup])
         self.assertEqual(result.exception.code, 1)
-        self.assertIn("This is build 01234567. Hylia supports build %s." % make_game.BUILD_ID, self.output)
+        self.assertIn("This is build 01234567. Ocarune supports build %s." % make_game.BUILD_ID, self.output)
         self.assertEqual(self.cache(), before)
 
     def test_missing_romfs_preserves_the_previous_cache_and_save(self):

@@ -37,7 +37,7 @@ def production_code(path):
 
 class ShaderStampCacheTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(prefix="hylia-shader-stamp-")
+        self.temp = tempfile.TemporaryDirectory(prefix="ocarune-shader-stamp-")
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.files = {
@@ -79,7 +79,7 @@ class ShaderStampCacheTests(unittest.TestCase):
             "spirv_headers": str(self.root / "deps/spirv-headers"),
             "vk_headers": str(self.root / "deps/vulkanheaders"),
             "obj_dir": str(self.root / "obj"), "cc": "clang", "jobs": [],
-            "stamp_def": '-DHYLIA_VERSION="%s"' % version,
+            "stamp_def": '-DOCARUNE_VERSION="%s"' % version,
         }
         with mock.patch.dict(os.environ, {"RX_RELEASE": "1"} if release else {}, clear=True), warnings.catch_warnings():
             # The production key/header helpers use short-lived open(...).read() expressions.
@@ -147,12 +147,12 @@ class ShaderStampCacheTests(unittest.TestCase):
             with self.subTest(linux=linux):
                 before = self.jobs(linux, release=True)
                 for name, job in before.items():
-                    shader = [f for f in job["flags"] if f.startswith("-DHYLIA_SHADER_STAMP=")]
-                    version = [f for f in job["flags"] if f.startswith("-DHYLIA_VERSION=")]
+                    shader = [f for f in job["flags"] if f.startswith("-DOCARUNE_SHADER_STAMP=")]
+                    version = [f for f in job["flags"] if f.startswith("-DOCARUNE_VERSION=")]
                     self.assertEqual(len(shader), int(name == "gpu/vk/vk_shader.cpp"))
                     self.assertEqual(len(version), int(name == "gpu/vk/vk_menu.cpp"))
                     if not name.startswith("host/posix/"):
-                        self.assertIn("-DHYLIA_RELEASE", job["flags"])
+                        self.assertIn("-DOCARUNE_RELEASE", job["flags"])
                 self.assertEqual(self.changed(before, self.jobs(linux, version="new", release=True)),
                                  {"gpu/vk/vk_menu.cpp"})
 

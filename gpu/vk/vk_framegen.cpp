@@ -299,7 +299,7 @@ void display_main() {
             memset(hist, 0, sizeof hist);
             stat = {0, 0, 0, j.at};
         }
-        // (hylia) The pacer. The game hands over frames 12 to 28 ms apart around a mean of 19, and shown as they came that
+        // (ocarune) The pacer. The game hands over frames 12 to 28 ms apart around a mean of 19, and shown as they came that
         // was the stutter, whatever the frame rate. Every frame now has its place on an even line, the recent frame time
         // apart, a frame early waiting for it: never more than one game frame behind what the game handed over, and a line
         // that has fallen behind what came starts again from now. RX_VK_PACE=0: as they come.

@@ -1,4 +1,4 @@
-# Installing Hylia
+# Installing Ocarune
 
 ## What the installer does
 
@@ -15,7 +15,7 @@ You need Python 3.10+ from python.org on your PATH (the Microsoft Store build do
 
 ## Getting your game file
 
-Hylia needs **your own** dump of the Switch 2 *Ocarina of Time* update: title `0400486024DEC000`, version 131072,
+Ocarune needs **your own** dump of the Switch 2 *Ocarina of Time* update: title `0400486024DEC000`, version 131072,
 build `e0f3ccfa`. Either the `.nup` package, or its extracted `exefs` and `romfs` folders. This project does not
 provide it, explain how to get it, or accept it in issues.
 
@@ -42,10 +42,10 @@ Useful options: `--jobs <n>` (how many files compile at once), `--log <file>` (a
 cd installer\wizard
 C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe -nologo -target:winexe -win32icon:oot.ico -out:Setup.exe Setup.cs -r:System.Windows.Forms.dll -r:System.Drawing.dll -r:Microsoft.CSharp.dll
 cd ..
-powershell -File package.ps1     # makes installer\Hylia-Setup (source + install.ps1 + Setup.exe)
+powershell -File package.ps1     # makes installer\Ocarune-Setup (source + install.ps1 + Setup.exe)
 ```
 
-Zip `Hylia-Setup` to share it. It never contains the game, a `.nup` or any built files. Because Hylia is GPL-3.0, the
+Zip `Ocarune-Setup` to share it. It never contains the game, a `.nup` or any built files. Because Ocarune is GPL-3.0, the
 source goes along with it.
 
 ## Where things go

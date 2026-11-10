@@ -28,7 +28,7 @@ build = load("build_times", ROOT / "nx2" / "build.py")
 
 class TimesRecordTests(unittest.TestCase):
     def setUp(self):
-        self.temporary = tempfile.TemporaryDirectory(prefix="hylia-times-")
+        self.temporary = tempfile.TemporaryDirectory(prefix="ocarune-times-")
         self.addCleanup(self.temporary.cleanup)
         self.work = Path(self.temporary.name)
 

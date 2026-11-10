@@ -13,12 +13,12 @@
 
 #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
 #include <intrin.h>
-#define HYLIA_RDTSC() ((uint64_t)__rdtsc())
-#define HYLIA_PAUSE() _mm_pause()
+#define OCARUNE_RDTSC() ((uint64_t)__rdtsc())
+#define OCARUNE_PAUSE() _mm_pause()
 #elif defined(__x86_64__) || defined(__i386__)
 #include <x86intrin.h>
-#define HYLIA_RDTSC() ((uint64_t)__rdtsc())
-#define HYLIA_PAUSE() _mm_pause()
+#define OCARUNE_RDTSC() ((uint64_t)__rdtsc())
+#define OCARUNE_PAUSE() _mm_pause()
 #endif
 
 typedef struct VmaAllocation_T* VmaAllocation;   // (vk_mem_alloc.h's handle)
@@ -54,7 +54,7 @@ struct Device {
          coop_matrix = false,   // (VK_KHR_cooperative_matrix with its feature)
          native_mma = false;    // (HMMA on it: the cooperative matrix test passed, vk_coopmat.cpp)
     bool eds3_polygon = false, eds3_clamp = false, eds3_blend = false, eds3_a2c = false;
-    bool mesh_fallback = false;   // (hylia) no VK_EXT_mesh_shader: task and mesh programs as compute shaders (vk_shader.cpp)
+    bool mesh_fallback = false;   // (ocarune) no VK_EXT_mesh_shader: task and mesh programs as compute shaders (vk_shader.cpp)
     VkPhysicalDeviceVulkan12Features vk12{};
     VkPhysicalDeviceVulkan13Features vk13{};
     VkShaderStageFlags sg32_stages = 0;   // (stages that run at 32 lanes when asked: the size the translated programs assume)
@@ -83,10 +83,10 @@ struct BufferRef {
     }
 };
 bool memory_init();                                   // vk_memory.cpp
-void memory_cpu_owned(uint64_t guest, uint64_t size);   // (hylia: words the replay writes on the CPU, left out of write-backs)
-void memory_table_begin();                         // (hylia: a recording's page table changes held back for its upload commands)
+void memory_cpu_owned(uint64_t guest, uint64_t size);   // (ocarune: words the replay writes on the CPU, left out of write-backs)
+void memory_table_begin();                         // (ocarune: a recording's page table changes held back for its upload commands)
 bool memory_table_flush();
-uint64_t memory_guest_pages();                        // (hylia: the device address of guest memory's page table, 0: none)
+uint64_t memory_guest_pages();                        // (ocarune: the device address of guest memory's page table, 0: none)
 void memory_sync();                                   // (at each submit: pools the game made or let go)
 BufferRef gpu_buffer(uint64_t gpu, uint64_t size);   // (empty when no pool holds the range)
 /// A range as a binding of the replay sees it: the pool's VRAM mirror when it has one (vk_memory.cpp), else the
@@ -97,8 +97,8 @@ uint64_t gpu_bind_stamp();
 /// Around each submission's recording: mirrors wanted since the last one are made (begin), what the GPU wrote into
 /// mirrors goes back to guest memory (end, outside any pass, before the closing barrier)
 void memory_begin_submission();
-void memory_sync_mirrors_before_segments();   // (hylia: vk_memory.cpp)
-bool probe_on();                                // (hylia: vk_draw.cpp, RX_VK_PROBE)
+void memory_sync_mirrors_before_segments();   // (ocarune: vk_memory.cpp)
+bool probe_on();                                // (ocarune: vk_draw.cpp, RX_VK_PROBE)
 bool probe_serial();
 void probe_dump_all(const char* why);
 void probe_log(uint64_t frame);
@@ -150,7 +150,7 @@ void memory_collect_written();
 void memory_capture_submit();
 /// The replay of the next submit: its capture (false: none, the pages are collected now as before)
 bool memory_take_capture(uint64_t value, uint64_t completed);
-bool memory_capture_now(uint64_t value, uint64_t completed);   // (hylia: made and taken at once)
+bool memory_capture_now(uint64_t value, uint64_t completed);   // (ocarune: made and taken at once)
 /// The submission the replay records next (bindings note it: a pool's mirror is in use until it is done)
 void memory_recording_value(uint64_t value, uint64_t completed);
 /// RX_VK_TEX_CAPTURE (on with the capture; =0 off): the storage of a texture uploaded from guest memory joins the
@@ -163,7 +163,7 @@ bool memory_has_shadow(uint64_t guest, uint64_t n);
 bool memory_read_as_submitted(uint64_t gpu, void* dst, uint64_t n);
 uint64_t memory_capture_view();          // (bumped when a capture is published or any page is stamped)
 uint32_t memory_page_stamp(uint64_t gpu); // (that address's page only)
-uint64_t gpu_pool_end(uint64_t gpu);   // (hylia) where the memory pool holding that address ends, 0: in none (vk_memory.cpp)
+uint64_t gpu_pool_end(uint64_t gpu);   // (ocarune) where the memory pool holding that address ends, 0: in none (vk_memory.cpp)
 uint64_t gpu_pool_start(uint64_t gpu); // (EvilOOT) and where it begins
 bool create_buffer_cached(uint64_t size, VkBufferUsageFlags usage, VkBuffer& buffer, VmaAllocation& allocation,
                           void** mapped, bool dedicated = false);   // (vk_vma.cpp: cached host memory, mapped)
@@ -252,16 +252,16 @@ inline int64_t perf_ticks_to_ns(int64_t ticks, int64_t freq) {
 // A cheap nanosecond clock for the per-phase replay timers. Ten QueryPerformanceCounter reads a draw were ~4% of
 // the GPU thread (gpu/render/rx_internal.h). The hot path reads the invariant TSC; the counter calibrates the scale once.
 inline int64_t prof_now() {
-#if defined(HYLIA_RDTSC)
+#if defined(OCARUNE_RDTSC)
     struct Scale { double ns_per; bool ok; };
     static const Scale scale = [] {
         LARGE_INTEGER f, a, b;
         QueryPerformanceFrequency(&f);
-        const uint64_t c0 = HYLIA_RDTSC();
+        const uint64_t c0 = OCARUNE_RDTSC();
         QueryPerformanceCounter(&a);
         volatile int sink = 0;
-        for (int i = 0; i < 400000; i++) { HYLIA_PAUSE(); sink += 1; }
-        const uint64_t c1 = HYLIA_RDTSC();
+        for (int i = 0; i < 400000; i++) { OCARUNE_PAUSE(); sink += 1; }
+        const uint64_t c1 = OCARUNE_RDTSC();
         QueryPerformanceCounter(&b);
         const int64_t dns = perf_ticks_to_ns(b.QuadPart - a.QuadPart, f.QuadPart);
         Scale s;
@@ -269,7 +269,7 @@ inline int64_t prof_now() {
         s.ns_per = s.ok ? (double)dns / (double)(c1 - c0) : 0.0;
         return s;
     }();
-    if (scale.ok) return (int64_t)((double)HYLIA_RDTSC() * scale.ns_per);
+    if (scale.ok) return (int64_t)((double)OCARUNE_RDTSC() * scale.ns_per);
 #endif
     LARGE_INTEGER t;
     QueryPerformanceCounter(&t);

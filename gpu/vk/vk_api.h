@@ -18,7 +18,7 @@ extern "C" {
 #define MKWVK_API_VERSION 6
 enum { HOS_OPT_CHEAT_HEARTS = 32, HOS_OPT_CHEAT_FLIGHT, HOS_OPT_CHEAT_ACTION, HOS_OPT_CHEAT_CAMERA };
 
-/* (hylia) the controls' names (host/nn_hid.c, host/pad_sdl.c, the pad_ and key_ lines of oot_options.ini):
+/* (ocarune) the controls' names (host/nn_hid.c, host/pad_sdl.c, the pad_ and key_ lines of oot_options.ini):
    the Switch's buttons in nn::hid's bit order, and a gamepad's inputs by position, SDL's order (the bottom face
    button first: A on an Xbox pad, cross on a DualSense) */
 enum { HOS_SW_A, HOS_SW_B, HOS_SW_X, HOS_SW_Y, HOS_SW_LS, HOS_SW_RS, HOS_SW_L, HOS_SW_R, HOS_SW_ZL, HOS_SW_ZR,
@@ -72,10 +72,10 @@ typedef struct MkwVkHost {
     uint64_t (*guest_alloc)(uint64_t size);
     /// (debugging) CPU writes to [guest, guest + size) logged with the writer's guest call stack (a page watch)
     void (*watch_guest_writes)(uint64_t guest, uint64_t size);
-    /* (hylia) the gamepads' inputs held now (1 << HOS_PAD_*), whatever they are bound to: the Insert menu's
+    /* (ocarune) the gamepads' inputs held now (1 << HOS_PAD_*), whatever they are bound to: the Insert menu's
        (host/nn_hid.c) */
     uint32_t (*pad_raw)(void);
-    /* (hylia) the controls, for the Insert menu's Controls page. button: the Switch's, HOS_SW_*; set HOS_BIND_PAD:
+    /* (ocarune) the controls, for the Insert menu's Controls page. button: the Switch's, HOS_SW_*; set HOS_BIND_PAD:
        the gamepad input that presses it (a HOS_PAD_* position, -1 none; slot 0 only); set HOS_BIND_KEY: the keys that
        do (Windows key codes, 0 none; slots 0 and 1; a mouse button's too, and HOS_KEY_* past the Switch's buttons).
        bind with button -1: all back to their defaults */
@@ -121,13 +121,13 @@ typedef struct MkwVkRenderer {
     void (*nvn_texture_created)(const nvn_tex *t);
     /* the CPU set an event's value: in order with the submits (the GPU's waits on it) */
     void (*nvn_event_signal)(uint64_t gpu, uint32_t value);
-    int (*option)(int id);   /* (hylia, the Insert menu) 0: game time follows the clock, 1: the menu is open, 2: dynamic resolution, 3: its fixed scale in percent, 4: the controllers count behind other windows, 5: text speed (0 normal to 3 instant), 6: native mouse look (host/mouse_native.c),
+    int (*option)(int id);   /* (ocarune, the Insert menu) 0: game time follows the clock, 1: the menu is open, 2: dynamic resolution, 3: its fixed scale in percent, 4: the controllers count behind other windows, 5: text speed (0 normal to 3 instant), 6: native mouse look (host/mouse_native.c),
                                 7: the mouse's sensitivity in percent, 8: its up and down swapped (host/nn_hid.c) */
     /* a submit with its queue */
     void (*nvn_submit_q)(const uint64_t *handles, int n, uint64_t queue);
-    /* (hylia) a fence of one queue: the value its own last submission signals (nvnQueueFenceSync) */
+    /* (ocarune) a fence of one queue: the value its own last submission signals (nvnQueueFenceSync) */
     uint64_t (*nvn_fence_q)(uint64_t queue);
-    /* (hylia, the Insert menu) a setting changed from the game's side, kept in the options file: 7 the mouse's sensitivity
+    /* (ocarune, the Insert menu) a setting changed from the game's side, kept in the options file: 7 the mouse's sensitivity
        in percent (the - and = keys, host/nn_hid.c) */
     void (*option_set)(int id, int value);
 } MkwVkRenderer;

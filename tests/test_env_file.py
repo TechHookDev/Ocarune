@@ -36,7 +36,7 @@ def main():
         game.mkdir()
         (game / "oot_env.txt").write_text("FROM_BESIDE=1\nSHARED=beside\n", encoding="utf-8")
         (tmp / "test_env.txt").write_text("# a test run's own switches\nFROM_OTHER=1\nSHARED=other\n", encoding="utf-8")
-        exe = str(game / "hylia").replace("\\", "\\\\")
+        exe = str(game / "ocarune").replace("\\", "\\\\")
         fixture = r'''#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -52,7 +52,7 @@ const PointerEntry* pointer_table(const NvnState& s, int stage);
 uint32_t stage_cbuf_word(const NvnState& s, const Stage& st, uint32_t index, uint32_t offset);   // (vk_shader.cpp)
 namespace {
 
-// ---- (hylia) RX_VK_PROF_FINE=1: where a draw's time goes, finer than the frame line's phases, and what each draw does ----
+// ---- (ocarune) RX_VK_PROF_FINE=1: where a draw's time goes, finer than the frame line's phases, and what each draw does ----
 // Off, each site is a test of one constant. On, a timed site reads the clock twice (~15 ns; the frame line's phases grow by the same, so
 // compare a run with it on to another with it on) and the sums are logged with the frame statistics, "a frame (fine)": the times in ms a
 // frame, the counts a draw. FT_*: the sections of the descriptor build (banks, c1, user uniform buffers, storage buffers, textures) and
@@ -686,7 +686,7 @@ struct PipeEntry {
 };
 std::unordered_map<uint64_t, std::unique_ptr<PipeEntry>> pipelines;   // (the replay thread's)
 int64_t st_draws, st_skipped, st_dispatches, st_passes, st_mesh, st_pending_skips, st_waits;
-// (hylia) skips by the line that made them, reported with the frame statistics (draw_skip_report)
+// (ocarune) skips by the line that made them, reported with the frame statistics (draw_skip_report)
 namespace {
 struct SkipSite { std::atomic<int> line{0}; std::atomic<int64_t> n{0}; int64_t last = 0; };
 SkipSite skip_sites[48];
@@ -722,7 +722,7 @@ bool depth_aspect(VkFormat f) {
     return is_depth_format(f) && f != VK_FORMAT_S8_UINT;
 }
 
-// (hylia) A driver's compiler that faults on a shader (amdvlk64.dll on a mesh program, Hylia issue 26) costs that one draw, not the game
+// (ocarune) A driver's compiler that faults on a shader (amdvlk64.dll on a mesh program, Ocarune issue 26) costs that one draw, not the game
 #ifdef _WIN32
 __declspec(noinline) VkResult guarded_graphics(VkPipelineCache cache, const VkGraphicsPipelineCreateInfo* ci, VkPipeline* pl) {
     __try {
@@ -764,7 +764,7 @@ uint32_t target_write_mask(const Program& p, const NvnState& s, int i) {
     return (s.chmask.mask >> (4 * i)) & 0xF & (all || !written ? 0xFu : (uint32_t)written);
 }
 thread_local const Program* cur_program = nullptr;   // (the draw's, for its dynamic write masks)
-/// (hylia) What target_write_mask reads of a program, as one word: whether its fragment stage stores each output and which
+/// (ocarune) What target_write_mask reads of a program, as one word: whether its fragment stage stores each output and which
 /// components it writes of it (6 bits each). Two programs with the same word make the same masks from the same state
 uint64_t program_wm_sig(const Program& p) {
     if (const int64_t known = p.wm_sig.load(std::memory_order_relaxed); known >= 0) return (uint64_t)known;
@@ -781,7 +781,7 @@ uint64_t program_wm_sig(const Program& p) {
     return sig;
 }
 
-// ---- (hylia) The precompile, as TotK Recomp's (runtime/vk_pipeline.c vk_pipeline_prewarm, keys in pipeline-keys.bin): each
+// ---- (ocarune) The precompile, as TotK Recomp's (runtime/vk_pipeline.c vk_pipeline_prewarm, keys in pipeline-keys.bin): each
 // pipeline the game asks for is noted in oot_pipelines.bin, by what built it; a release build, before the game starts,
 // makes every kept program ready and builds every noted pipeline on all the CPUs (the driver's own cache, mkw_vk_pipelines.bin,
 // makes that quick), so that nothing is built during play. RX_VK_PRECOMPILE=1: in any build; =0: off. A build with
@@ -860,7 +860,7 @@ void pipeline_note(uint64_t key, const Program& p, const NvnState& s, const Targ
     if (note_file && noted.insert(key).second) fwrite(rec.get(), sizeof(PipeNote), 1, note_file), fflush(note_file);
 }
 
-// ---- (hylia) Stage libraries, as TotK Recomp's runtime/vk_pipeline.c: the part of a pipeline that costs is its shaders, and with
+// ---- (ocarune) Stage libraries, as TotK Recomp's runtime/vk_pipeline.c: the part of a pipeline that costs is its shaders, and with
 // VK_EXT_graphics_pipeline_library they are built apart from what a draw adds (vertex layout, target formats). prepare_run builds
 // each program's two shader libraries once, for the driver's own cache to keep; a draw that needs a pipeline nothing has built gets
 // them back from that cache, links them on the spot, and draws at once. The worker's full build then takes over. Needs the blend,
@@ -944,7 +944,7 @@ struct PipeFast {
 };
 thread_local PipeFast pipe_fast[2];
 
-/// (hylia) the stage a graphics pipeline's vertex input comes from (a fallback program's first stage is a compute one)
+/// (ocarune) the stage a graphics pipeline's vertex input comes from (a fallback program's first stage is a compute one)
 const Shader::Info* vertex_info(const Program& p) {
     for (const Stage& st : p.stages)
         if (st.vk_stage == VK_SHADER_STAGE_VERTEX_BIT) return &st.info;
@@ -953,7 +953,7 @@ const Shader::Info* vertex_info(const Program& p) {
 
 PipeEntry* graphics_pipeline(const Program& p, const NvnState& s, const Targets& at, VkPrimitiveTopology topo) {
     // the key: what is baked into it (the rest is dynamic state)
-    // (hylia: and which variant: p.key is the same for all the variants of a program by its textures' types, and a draw of
+    // (ocarune: and which variant: p.key is the same for all the variants of a program by its textures' types, and a draw of
     // one ran another's shaders under its own descriptors)
     uint32_t formats[8]{};
     uint32_t vattr[16]{}, divs[16]{};
@@ -1059,7 +1059,7 @@ VkPipeline build_graphics(const Program& p, const NvnState& s, const Targets& at
     const auto t0 = std::chrono::steady_clock::now();
     std::vector<VkPipelineShaderStageCreateInfo> stages;
     for (const Stage& st : p.stages) {
-        // (hylia: the fallback's dispatches are not graphics stages. Only a fallback program's: with native mesh shaders
+        // (ocarune: the fallback's dispatches are not graphics stages. Only a fallback program's: with native mesh shaders
         // the task and mesh stages are the pipeline's own, and a mesh program built without them was a fragment stage
         // alone, which drew none of its geometry and then lost the device, issue 640)
         if (p.fallback && (st.vk_stage & (VK_SHADER_STAGE_COMPUTE_BIT | VK_SHADER_STAGE_TASK_BIT_EXT | VK_SHADER_STAGE_MESH_BIT_EXT)))
@@ -1280,7 +1280,7 @@ VkSamplerAddressMode wrap(uint8_t w) {
     default: return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     }
 }
-// (hylia) RX_VK_ANISO=<n> (default 0: the game's own): the samplers that filter linearly between texels and between mip levels
+// (ocarune) RX_VK_ANISO=<n> (default 0: the game's own): the samplers that filter linearly between texels and between mip levels
 // get at least n-times anisotropic filtering (the game's value if it asks for more; the device's limit if n is above it): surfaces seen
 // at a slant keep their detail, for some GPU time. Part of every sampler's key below, so no cached sampler is one made for another n
 uint32_t aniso_override() {
@@ -1452,7 +1452,7 @@ struct HandleHit {
     uint64_t tex_epoch;   // (the texture epoch it was last touched in)
 };
 thread_local std::unordered_map<uint64_t, HandleHit> handle_hits;
-// (hylia) RX_VK_TRACE_TEX=<w>x<h>,...: each draw sampling a texture of that size is logged with its state, every 30th frame, 600 lines: a
+// (ocarune) RX_VK_TRACE_TEX=<w>x<h>,...: each draw sampling a texture of that size is logged with its state, every 30th frame, 600 lines: a
 // model that does not show is found by its textures, and whether the game draws it, and how, read from the line
 thread_local const Texture* trace_tex_hit = nullptr;
 thread_local uint32_t trace_tex_mask = 0;
@@ -1473,8 +1473,8 @@ bool trace_tex_wanted(const Texture* t) {
         if (t->width == want[i].first && t->height == want[i].second) trace_tex_mask |= 1u << i;
     return !want.empty() && trace_tex_mask == (1u << want.size()) - 1;   // (a draw with all of them)
 }
-thread_local VkFormat last_view_format = VK_FORMAT_UNDEFINED;   // (hylia: RX_VK_LOG_IMG, the view last made)
-bool log_img_wanted(uint64_t key) {   // (hylia) RX_VK_LOG_IMG=<key prefix,...>: its texture and image bindings, 8 times
+thread_local VkFormat last_view_format = VK_FORMAT_UNDEFINED;   // (ocarune: RX_VK_LOG_IMG, the view last made)
+bool log_img_wanted(uint64_t key) {   // (ocarune) RX_VK_LOG_IMG=<key prefix,...>: its texture and image bindings, 8 times
     static const char* want = getenv("RX_VK_LOG_IMG");
     if (!want) return false;
     char hex[24];
@@ -1593,7 +1593,7 @@ VkDescriptorBufferInfo uniform_range(const NvnState& s, const Stage& st, uint32_
         }
         const bool grid_same = st.nvn_stage != 5 || !std::memcmp(c.grid, s.grid, sizeof c.grid);
         static const bool no_bank_cache = getenv("RX_VK_NO_DESC_REUSE") != nullptr;   // (A/B: filled every time)
-        // (hylia) a graphics stage's c2 is made from its textures, samplers and images, its c0 from its storage buffers: it stands while
+        // (ocarune) a graphics stage's c2 is made from its textures, samplers and images, its c0 from its storage buffers: it stands while
         // those do, whatever else was bound (a uniform buffer for each draw). RX_VK_BANK_GEN_OFF=1: while nothing at all was bound anew)
         static const bool stage_gen_off = getenv("RX_VK_BANK_GEN_OFF") != nullptr;
         const int bank_stage = std::clamp(st.nvn_stage, 0, kNvnStages - 1);
@@ -1908,7 +1908,7 @@ void build_descriptors(const NvnState& s, const Program& p) {
                 }
                 const uint64_t base = addr & ~(salign - 1);
                 uint64_t n = std::max<uint64_t>(((size + (addr - base)) + 3) & ~3ull, 16);
-                {   // (hylia, RX_VK_SSBO_STRETCH=1: a read-only buffer bound to its pool's end, up to 64 MB. Lichii bf3f395c9: the grass's
+                {   // (ocarune, RX_VK_SSBO_STRETCH=1: a read-only buffer bound to its pool's end, up to 64 MB. Lichii bf3f395c9: the grass's
                     // task and mesh programs read records 12-18 MB past a base whose size word said less, read 0 and culled every blade)
                     static const bool stretch = getenv("RX_VK_SSBO_STRETCH") != nullptr;
                     if (stretch && !d.is_written && addr && d.count == 1)
@@ -1926,7 +1926,7 @@ void build_descriptors(const NvnState& s, const Program& p) {
                         if (const uint64_t end = gpu_pool_end(base); end > base + n) wide_n = std::min(end - base, wide) & ~3ull;
                 }
                 const auto t0 = slow_desc_timing() ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
-                // (hylia) a storage buffer table's entries (count > 1, Info::global_tables): the ones past the table's
+                // (ocarune) a storage buffer table's entries (count > 1, Info::global_tables): the ones past the table's
                 // end are whatever the constant buffer holds there, bound only when they look like a buffer
                 const bool plausible = d.count == 1 || (size && size <= (256ull << 20) && host->gpu_guest(base));
                 BufferRef b = addr && plausible ? gpu_buffer_bind(base, n, d.is_written && !bare) : BufferRef{};
@@ -1987,7 +1987,7 @@ void build_descriptors(const NvnState& s, const Program& p) {
                 static const int table_unlimited = getenv("RX_VK_LOG_TABLE") != nullptr;
                 if (d.count > 1 && table_track_open(table_told.load(std::memory_order_relaxed),
                                                     table_seen.load(std::memory_order_relaxed), table_unlimited)) {
-                    table_seen.fetch_add(1, std::memory_order_relaxed);   // (hylia) a table entry bound one frame and not the next, 60 lines, then it stops looking
+                    table_seen.fetch_add(1, std::memory_order_relaxed);   // (ocarune) a table entry bound one frame and not the next, 60 lines, then it stops looking
                     static std::mutex tm;
                     static std::unordered_map<uint64_t, std::pair<bool, uint64_t>> was;   // -> bound, its address
                     static int told;
@@ -2004,7 +2004,7 @@ void build_descriptors(const NvnState& s, const Program& p) {
                     }
                     was[key] = {bound, addr};
                 }
-                {   // (hylia) RX_VK_LOG_WRITEBACK=1: the programs that bind a big written storage buffer (each written
+                {   // (ocarune) RX_VK_LOG_WRITEBACK=1: the programs that bind a big written storage buffer (each written
                     // range is copied back to guest memory at the submission's end), 40 of them
                     static const bool log_wb = getenv("RX_VK_LOG_WRITEBACK") != nullptr;
                     static int logged;
@@ -2200,7 +2200,7 @@ struct Pushed {
     VkPipelineLayout layout = VK_NULL_HANDLE;
     size_t n = 0;                                // (the writes as pushed)
     std::vector<std::vector<uint64_t>> writes;   // (each write's descriptors, as pushed; RX_VK_PUSH_STATE_OLD=1)
-    // (hylia) the same in one vector of words and where each write's begin: a program change was a vector of vectors resized to the
+    // (ocarune) the same in one vector of words and where each write's begin: a program change was a vector of vectors resized to the
     // new program's writes, each new one grown word by word (3 allocations a write, and the ones cut off freed: a dozen of each a draw)
     std::vector<uint64_t> words;
     std::vector<uint32_t> at;
@@ -2826,7 +2826,7 @@ int dyn_pack(const NvnState& s, const Targets& at, VkPrimitiveTopology topo, boo
     atb += (int)sizeof s.ds;
     std::memcpy(raw + atb, s.blend, sizeof s.blend);
     atb += (int)sizeof s.blend;
-    // (hylia) what the program makes of the write masks, not the program: draws change program far more often than they change that,
+    // (ocarune) what the program makes of the write masks, not the program: draws change program far more often than they change that,
     // and each program change worked the whole state out again. RX_VK_DYN_PROG_KEY=1: the program, as before)
     static const bool by_program = getenv("RX_VK_DYN_PROG_KEY") != nullptr;
     const uint64_t prog = by_program || !cur_program ? (uint64_t)(uintptr_t)cur_program : program_wm_sig(*cur_program);
@@ -2880,7 +2880,7 @@ void dynamic_state(VkCommandBuffer cmd, const NvnState& s, const Targets& at, Vk
         d.sref[f] = s.stencil_ref[f] & 0xFF, d.scmp[f] = s.stencil_value_mask[f] & 0xFF, d.swm[f] = s.stencil_mask[f] & 0xFF;
     d.bias[0] = s.poly_offset[1], d.bias[1] = s.poly_offset[2], d.bias[2] = s.poly_offset[0];
     d.bias_en = s.poly.offset_en != 0;
-    {   // (hylia) The characters' own shadow maps (square, depth only, 768 and less; 1e26755d projects them on the screen): their
+    {   // (ocarune) The characters' own shadow maps (square, depth only, 768 and less; 1e26755d projects them on the screen): their
         // stored depth is moved away from the light, or they shadow themselves whole: Link and the ferns black in the shade, while
         // the ground behind them keeps their shadow. RX_VK_SHADOW_BIAS=<units>,<slope>; 0: as the game asks
         static float units = -1, slope = 0;
@@ -2928,7 +2928,7 @@ void dynamic_state(VkCommandBuffer cmd, const NvnState& s, const Targets& at, Vk
     d.dw = !sw().no_depth && depth && s.ds.dw;
     d.dop = compare_op(s.ds.df);
     if (fp) d.dt = true, d.dw = true, d.dop = VK_COMPARE_OP_ALWAYS;
-    {   // (hylia) A colour pass after a depth pass tests EQUAL against what another program wrote. Intel's compiler does not give two
+    {   // (ocarune) A colour pass after a depth pass tests EQUAL against what another program wrote. Intel's compiler does not give two
         // programs the same position to the last bit, and the ground came out in holes: the sky through them, a white forest.
         // A small margin towards the camera instead. RX_VK_EQ_BIAS=<units>, 0: as the game asks
         static const float eq_bias = getenv("RX_VK_EQ_BIAS") ? (float)atof(getenv("RX_VK_EQ_BIAS")) : dev.props.vendorID == 0x8086 ? 64.0f : 0.0f;
@@ -3355,7 +3355,7 @@ void trace_line(const char* fmt, ...) {
     while (pass_traces.size() > 8) pass_traces.erase(pass_traces.begin());
 }
 
-// (hylia) RX_VK_PROBE=1 (replay is serial then): the centre texel of every colour target after each pass and of
+// (ocarune) RX_VK_PROBE=1 (replay is serial then): the centre texel of every colour target after each pass and of
 // every written image after each dispatch, kept for the last 16 frames. At a flash (RX_VK_FLASH) the entries of that
 // frame that differ from both neighbours' are logged in order: the first is the pass that went wrong.
 namespace {
@@ -3710,7 +3710,7 @@ void log_dump_draw(const NvnState& s, const Program& p, const DrawArgs& d) {
 }
 extern int64_t presents_now;   // (vk_replay.cpp)
 uint32_t stage_cbuf_word(const NvnState& s, const Stage& st, uint32_t index, uint32_t offset);   // (vk_shader.cpp)
-// (hylia) RX_VK_EXPOSURE_LOG=1: the final pass's exposure (c3+0x38 of its fragment stage, OoT's 73320e720a317817) at each
+// (ocarune) RX_VK_EXPOSURE_LOG=1: the final pass's exposure (c3+0x38 of its fragment stage, OoT's 73320e720a317817) at each
 // frame, kept for exposure_log_dump when the frame log sees a white picture
 struct ExposureRing { int64_t present; uint32_t word; };
 std::mutex exposure_mu;
@@ -4402,7 +4402,7 @@ bool mesh_indirect_convert(VkCommandBuffer cmd, const DrawArgs& d) {
     return true;
 }
 } // namespace
-// (hylia) NVN's indirect mesh draws hold (count, first) and Vulkan's (x, y, z): given as they were, every one drew y = first = 0 workgroups,
+// (ocarune) NVN's indirect mesh draws hold (count, first) and Vulkan's (x, y, z): given as they were, every one drew y = first = 0 workgroups,
 // with no error. They are most of the game's vegetation: the forest's trees, ferns and grass (GPU culling writes their counts, so they can only
 // be moved on the GPU): each count is copied into this buffer of (count, 1, 1) just before its draw. The GPU runs the copies and draws in
 // order, so a slot used again is safe. A first other than 0 has no Vulkan counterpart.
@@ -4411,7 +4411,7 @@ VkBuffer mesh_args_buffer = VK_NULL_HANDLE;
 VmaAllocation mesh_args_alloc = nullptr;
 uint32_t* mesh_args_words = nullptr;
 uint64_t mesh_args_address = 0;   // (its device address: a task program reads its draw's first workgroup at + 12, + 16 per draw)
-// (hylia) Indirect mesh draws' arguments, 16 bytes each as Vulkan takes them with the first after: {count, 1, 1, first}. NVN's are
+// (ocarune) Indirect mesh draws' arguments, 16 bytes each as Vulkan takes them with the first after: {count, 1, 1, first}. NVN's are
 // {count, 0, 0, first}: as they lay, every foliage draw had no workgroups in y and z and drew nothing. Entry 0 stays {0, 1, 1, 0}: the
 // first of draws that have none
 bool mesh_args_ready() {
@@ -4449,7 +4449,7 @@ struct KeptVertex {
 };
 thread_local KeptVertex kept_vb[16];
 
-// ---- (hylia, issue 640) a GPU without mesh shaders: the task and mesh stages as compute dispatches and a
+// ---- (ocarune, issue 640) a GPU without mesh shaders: the task and mesh stages as compute dispatches and a
 // generated vertex stage, drawn through an ordinary graphics pipeline. Records and payloads live in two buffers a
 // program reuses draw after draw; the commands are ordered, so each dispatch runs after the last draw that read them.
 namespace {
@@ -4660,18 +4660,18 @@ void draw(VkCommandBuffer cmd, NvnState& s, const DrawArgs& d) {
         ParLock lk(d.mesh);   // (graphics programs: each thread's picks, program_pick's own lock)
         cp = program_for(s, d.mesh ? ProgramKind::Mesh : ProgramKind::Graphics, types);
     }
-    {   // (hylia, a test) RX_VK_NO_MESH=1: task / mesh draws left out, to see what they draw; =2: the others left out
+    {   // (ocarune, a test) RX_VK_NO_MESH=1: task / mesh draws left out, to see what they draw; =2: the others left out
         static const int no_mesh = getenv("RX_VK_NO_MESH") ? atoi(getenv("RX_VK_NO_MESH")) : 0;
         if ((no_mesh == 1 && d.mesh) || (no_mesh == 2 && !d.mesh)) return;
     }
-    if (!cp) {   // (hylia) which draw has no program, 12 times: its stages' native code keys
+    if (!cp) {   // (ocarune) which draw has no program, 12 times: its stages' native code keys
         static std::atomic<int> told{0};
         if (told++ < 12) logf("vk: a draw without a program (frame %llu); its code:%s", (unsigned long long)texture_frame_no(),
                               program_code_keys(s).c_str());
         SKIP_HERE();
     }
     if (skip_live(cp->key)) return;   // (EvilOOT, RX_VK_SKIP_FILE)
-    {   // (hylia, RX_VK_SKIP_PROG: draws too, their native code keys logged once; =-: none. By default OoT's 53509044401d78d2, 128
+    {   // (ocarune, RX_VK_SKIP_PROG: draws too, their native code keys logged once; =-: none. By default OoT's 53509044401d78d2, 128
         // draws of a full-screen pass over two 64^3 volumes, once, while the game loads: on about half the first starts the GPU stalled in
         // them for Windows' two seconds and the device was lost, a black screen with the frame counter over it. Its shaders are straight-line
         // sampling code and the cause is still open. It was taken off this list once after a few clean runs: it had not gone. 0 lost
@@ -4707,7 +4707,7 @@ void draw(VkCommandBuffer cmd, NvnState& s, const DrawArgs& d) {
     // made this frame), as totk-pc-recomp's TOTK_PIPE_SKIP rule. RX_VK_PIPE_WAIT=1: always waited for.
     // (waited for by default: a draw left out showed as missing geometry in races, where many programs are new;
     // RX_VK_PIPE_SKIP=1: left out when its targets hold an earlier frame's picture, as before)
-    // (hylia: left out by default. Waiting, Ocarina froze 0.2-3 s at each area's first new programs, the most reported stutter;
+    // (ocarune: left out by default. Waiting, Ocarina froze 0.2-3 s at each area's first new programs, the most reported stutter;
     // RX_VK_PIPE_SKIP=0: waited for, as mkw-recomp needs)
     static const bool always_wait = getenv("RX_VK_PIPE_SKIP") && atoi(getenv("RX_VK_PIPE_SKIP")) == 0;
     const bool may_skip = !always_wait && targets_persistent(at);
@@ -4881,7 +4881,7 @@ void draw(VkCommandBuffer cmd, NvnState& s, const DrawArgs& d) {
         FINE_SCOPE(FT_HAZARD);
         begin_pass(cmd, at);
     }
-    probe_draw(s, p, pass.draws);   // (hylia: RX_VK_PROBE)
+    probe_draw(s, p, pass.draws);   // (ocarune: RX_VK_PROBE)
     gprof_run(cmd, p.key);   // (RX_VK_PASS_TIMING=2)
     pass.prog = p.key;
     if (!pass.first_prog) pass.first_prog = p.key;
@@ -4985,7 +4985,7 @@ void draw(VkCommandBuffer cmd, NvnState& s, const DrawArgs& d) {
         if (stats_query.cmd && gpu_dump_on) stats_query.state = &s, stats_query.prog = p.key;
     }
     if (d.mesh) {
-        if (p.fallback) {   // (hylia: the generated vertex stage reads the records; one vertex a corner)
+        if (p.fallback) {   // (ocarune: the generated vertex stage reads the records; one vertex a corner)
             if (fallback_vertex_count) vkCmdDraw(cmd, fallback_vertex_count, 1, 0, 0);
             st_mesh++;
             st_draws++, pass.draws++;
@@ -5231,7 +5231,7 @@ struct DispatchClock {   // (a dispatch over 2 ms: logged, with where its time w
     }
 };
 
-/// (hylia) OoT's neural upscaler (about 13 tensor-core compute passes a frame over storage-buffer feature maps,
+/// (ocarune) OoT's neural upscaler (about 13 tensor-core compute passes a frame over storage-buffer feature maps,
 /// 1920x1080 in, 2560x1440 out) does not translate: its matrix multiplies and a few other native opcodes have no
 /// lowering. Its last pass reads the network's result, the input colour and a noise texture and writes the output
 /// image; left out, the output stays black under the UI drawn over it. Here a rejected compute pass that writes a
@@ -5296,7 +5296,7 @@ bool movie_upscale(VkCommandBuffer cmd, uint32_t in_handle, uint32_t out_handle,
     return true;
 }
 
-// (hylia, issue 109) The movie upscaler's networks cost 12 ms a frame on an RTX 3050 and 83-93 ms on an RTX 4060 with a newer
+// (ocarune, issue 109) The movie upscaler's networks cost 12 ms a frame on an RTX 3050 and 83-93 ms on an RTX 4060 with a newer
 // driver: the intro movie ran at 10 fps and the game never got past it. When a frame of few draws (a movie) takes over 40 ms
 // of GPU time (vk_replay.cpp), they are left out from then on, as on AMD: the linear upscale below, the same picture a little
 // softer. The gameplay networks are never left out. RX_VK_NETWORK_KEEP=all: never
@@ -5430,13 +5430,13 @@ bool upscale_stub(VkCommandBuffer cmd, const NvnState& s, uint64_t key) {
     return true;
 }
 
-/// (hylia) OoT's gameplay TAAU network (fd029a317a9a4b94) stood in for: its input upscaled into its output
+/// (ocarune) OoT's gameplay TAAU network (fd029a317a9a4b94) stood in for: its input upscaled into its output
 /// (shaders/taau_upscale.comp). The network's translation loses the blue channel, the yellow cast over every
 /// scene; with this the picture is right, without the network's temporal anti-aliasing.
 /// RX_VK_TAAU_KEYS=<program key prefixes,...> (default fd029a317a9a4b94; "-": none, the network runs)
 bool taau_key(uint64_t key) {
     // (the real network where the card runs it as the console does; on the software multiplies it cost most of a frame on AMD's cards, and a
-    // locked 60 with this in its place: Hylia issue 52)
+    // locked 60 with this in its place: Ocarune issue 52)
     static const char* keys = getenv("RX_VK_TAAU_KEYS") ? getenv("RX_VK_TAAU_KEYS")
                               : Shader::Backend::SPIRV::mma_software || getenv("RX_VK_NO_F16")
                                     ? "fd029a317a9a4b94" : "-";   // (RX_VK_NO_F16: vk_shader.cpp leaves the network out)
@@ -5607,7 +5607,7 @@ bool taau_stand_in(VkCommandBuffer cmd, const NvnState& s, const Program& p) {
 }
 
 bool precompile_wanted() {
-#if defined(HYLIA_RELEASE)
+#if defined(OCARUNE_RELEASE)
     bool on = true;
 #else
     bool on = false;
@@ -5621,7 +5621,7 @@ std::string prepared_path() {
     std::string path(exe, exe_n);
     return path.substr(0, path.find_last_of("\\/") + 1) + "oot_prepared.bin";
 }
-/// (hylia) An update: every shader was prepared once here, for another translator. Each release changes the translator, and every
+/// (ocarune) An update: every shader was prepared once here, for another translator. Each release changes the translator, and every
 /// update then held the game's start for the whole seed again (116k variants, minutes on most PCs: "shaders need to be prepared every
 /// update"). With RX_VK_PREPARE_BACKGROUND=1 only what the notes name is built before the game (precompile_run), the rest in play
 /// behind it (prepare_background)
@@ -5674,7 +5674,7 @@ bool prepare_run(void (*progress)(size_t done, size_t total), bool background) {
     blank->nvattr = 16;
     pcache_init();   // (once, here: the workers below build compute pipelines into it)
     std::atomic<size_t> next{0}, done{0}, made{0}, libs{0}, variants{0}, asking{0}, capped{0};
-    // (hylia) compute pipelines too, for the driver's own cache: built in play they stopped the game while the driver compiled
+    // (ocarune) compute pipelines too, for the driver's own cache: built in play they stopped the game while the driver compiled
     // them, seconds each for the culling programs (53caac5f: 6.5 s, 41 s inlined), which looked like a hang
     const auto warm_compute = [&](Program& p) {
         if (!warm_cs || taau_key(p.key)) return;
@@ -5704,7 +5704,7 @@ bool prepare_run(void (*progress)(size_t done, size_t total), bool background) {
         for (;;) {
             const size_t i = next++;
             if (i >= total) return;
-            if (seed_is_compute(i / 3)) {   // (hylia) a compute program with each of its texture variants, each warmed
+            if (seed_is_compute(i / 3)) {   // (ocarune) a compute program with each of its texture variants, each warmed
                 if (i % 3 == 0) {
                     const SeedVariants v = seed_compute(i / 3, 64, warm_compute);
                     made += v.variants != 0, variants += v.variants, asking += v.variants > 1, capped += v.capped && v.variants;
@@ -5879,7 +5879,7 @@ void precompile_run(void (*progress)(size_t done, size_t total)) {
          std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count(), read_ms);
 }
 
-// (hylia) The pipelines the notes predict for the programs no note names (vk_predict.cpp), after a prepare that prepared: each built
+// (ocarune) The pipelines the notes predict for the programs no note names (vk_predict.cpp), after a prepare that prepared: each built
 // once for the driver's own cache and let go. Not into ours (mkw_vk_pipelines.bin, read whole at every start: ~40000 more pipelines made
 // it 1.7 GB), nor kept: each program is borrowed from oot_programs.bin for its pipelines and let go
 void predict_run(void (*progress)(size_t done, size_t total)) {
@@ -5942,7 +5942,7 @@ void dispatch(VkCommandBuffer cmd, NvnState& s, uint32_t x, uint32_t y, uint32_t
         st_waits++;
         st_wait_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
     }
-    if (!cp || cp->failed) {   // (hylia) the program's resources, once a control section: what a rejected dispatch reads/writes
+    if (!cp || cp->failed) {   // (ocarune) the program's resources, once a control section: what a rejected dispatch reads/writes
         static std::mutex mu2;
         static std::unordered_set<uint64_t> seen2;
         const uint64_t id = s.prog.sd[0].control;
@@ -5973,7 +5973,7 @@ void dispatch(VkCommandBuffer cmd, NvnState& s, uint32_t x, uint32_t y, uint32_t
             logf("%s", line);
         }
     }
-    if (cp && cp->failed) {   // (hylia) which programs' dispatches are left out, once each, with their grids
+    if (cp && cp->failed) {   // (ocarune) which programs' dispatches are left out, once each, with their grids
         static std::mutex mu;
         static std::unordered_set<uint64_t> seen;
         std::lock_guard lk(mu);
@@ -5994,7 +5994,7 @@ void dispatch(VkCommandBuffer cmd, NvnState& s, uint32_t x, uint32_t y, uint32_t
     if ((!cp || cp->failed || slow_network) && upscale_stub(cmd, s, compute_code_key(s))) return void(st_dispatches++);
     if (slow_network) SKIP_HERE();   // (an earlier pass of the network: the stub is its last pass)
     if (!cp || !cp->ready.load(std::memory_order_acquire) || cp->failed) SKIP_HERE();
-    {   // (hylia, RX_VK_SKIP_PROG=<key prefix,...>: those programs' dispatches left out, for diagnosis)
+    {   // (ocarune, RX_VK_SKIP_PROG=<key prefix,...>: those programs' dispatches left out, for diagnosis)
         static const char* skip = getenv("RX_VK_SKIP_PROG");
         if (skip) {
             char hex[24];
@@ -6009,7 +6009,7 @@ void dispatch(VkCommandBuffer cmd, NvnState& s, uint32_t x, uint32_t y, uint32_t
     }
     dclock.key = cp->key;
     texture_watch_prog(cp->key);
-    {   // (hylia, RX_VK_LOG_PUSH=<key prefix>: once, that program's push constants and the c0 words it reads)
+    {   // (ocarune, RX_VK_LOG_PUSH=<key prefix>: once, that program's push constants and the c0 words it reads)
         static const char* want = getenv("RX_VK_LOG_PUSH");
         static bool done;
         char hex[24];
@@ -6284,7 +6284,7 @@ void dispatch(VkCommandBuffer cmd, NvnState& s, uint32_t x, uint32_t y, uint32_t
         }
 }
 
-// (hylia) In the parallel replay's dry pass, in stream order on the replay thread: the images this draw or dispatch
+// (ocarune) In the parallel replay's dry pass, in stream order on the replay thread: the images this draw or dispatch
 // writes marked as the GPU's (texture_written) before any worker runs. Workers record out of order, and that mark was
 // made as each reached its draw: one ahead of it sampled a render target or compute output as never written and
 // uploaded stale guest memory over it, an upload that runs after the earlier segment's work. Targets change address

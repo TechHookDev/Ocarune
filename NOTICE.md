@@ -1,6 +1,6 @@
 # Third-party notices
 
-Hylia is GPL-3.0-or-later. It includes or builds on the following; each keeps its own license and notices.
+Ocarune is GPL-3.0-or-later. It includes or builds on the following; each keeps its own license and notices.
 
 | Project | Used for | License |
 |---|---|---|

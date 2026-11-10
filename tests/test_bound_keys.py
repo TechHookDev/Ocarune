@@ -74,7 +74,7 @@ static const char *ini_dir;
 #else
 #define EXE_SEP "/"
 #endif
-static DWORD GetModuleFileNameA(void *m, char *b, DWORD n) { (void)m; return (DWORD)snprintf(b, n, "%s" EXE_SEP "hylia.exe", ini_dir); }
+static DWORD GetModuleFileNameA(void *m, char *b, DWORD n) { (void)m; return (DWORD)snprintf(b, n, "%s" EXE_SEP "ocarune.exe", ini_dir); }
 #define hos_game_path_a(b,n) GetModuleFileNameA(0,b,n)
 static int held[256];
 static int key(int vk) { return held[vk & 255]; }
@@ -135,7 +135,7 @@ class BoundKeysTests(unittest.TestCase):
         for needle in ("bound_down(HOS_KEY_MOVE_UP,", "bound_down(HOS_KEY_CAM_RIGHT,", "mouse_buttons_arm(", "bound_down(i, 1)"):
             self.assertIn(needle, read, "read_input does not read the bound keys: " + needle)
         self.assertNotIn("key('W')", read, "read_input still reads WASD itself")
-        with tempfile.TemporaryDirectory(prefix="hylia-bound-keys-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="ocarune-bound-keys-") as tmp:
             tmp = Path(tmp)
             (tmp / "oot_options.ini").write_text("key_move_up=90,0\npad_move_up=0\n", encoding="utf-8")
             (tmp / "t.c").write_text(PRELUDE + code + MAIN, encoding="utf-8")

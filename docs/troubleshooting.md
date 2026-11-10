@@ -23,5 +23,5 @@ Its first line is the version.
 
 ## Reporting a problem
 
-[Open an issue](https://github.com/TechHookDev/Hylia/issues/new/choose) with the Hylia version, your GPU and driver,
+[Open an issue](https://github.com/TechHookDev/Ocarune/issues/new/choose) with the Ocarune version, your GPU and driver,
 where in the game it happens, your `oot_options.ini`, and `oot_log.txt`. **Never attach game files, keys or saves.**

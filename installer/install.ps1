@@ -16,11 +16,11 @@ if (-not $Cache) { $Cache = Join-Path $here "cache" }
 $ProgressPreference = "SilentlyContinue"
 
 # name, sha256, url, folder in the zip that becomes $Src\<name>  (re-hosted by this project, SHA-256 checked)
-$B = "https://github.com/TechHookDev/Hylia/releases/download/tools-v1"
+$B = "https://github.com/TechHookDev/Ocarune/releases/download/tools-v1"
 $parts = @(
-  @{n="cpm";         h="ecd26c45ccc00a6998bfcb2d7e0be52e38d663b1897e2099a0351a821518d80e"; u="$B/Hylia-cpm-ecd26c45ccc0.zip";                from="Hylia\tools\cpm"; s="cpm"},
-  @{n="third_party"; h="f758f93f05ce7322c19867d13adb8be67f1a65182dbc460b534334c0c80ba188"; u="$B/Hylia-third_party-f758f93f05ce.zip";     from="Hylia\tools\third_party"; s="third_party\sdl2\SDL2.dll"},
-  @{n="wgpu-native"; h="288d0225523a6ab9e85ee162b3f15b03d062087946b0255ff6c5ea3a1c73e67d"; u="$B/Hylia-wgpu-native-288d0225523a.zip"; from="Hylia\tools\wgpu-native"; s="wgpu-native\include"},
+  @{n="cpm";         h="bfd2206346ad0c2f85a136c719668647193f3fa0385f30580d1b501eafd84bdf"; u="$B/Ocarune-cpm-bfd2206346ad.zip";                from="Ocarune\tools\cpm"; s="cpm"},
+  @{n="third_party"; h="bc1fc03536519dd02913d70d681576f209ec9c12092006fe9b6ac0233cf8b302"; u="$B/Ocarune-third_party-bc1fc0353651.zip";     from="Ocarune\tools\third_party"; s="third_party\sdl2\SDL2.dll"},
+  @{n="wgpu-native"; h="c61896fa48ae653013cc8fd3ba54d383e785e00ead2411ca4958e2b6a96a5163"; u="$B/Ocarune-wgpu-native-c61896fa48ae.zip"; from="Ocarune\tools\wgpu-native"; s="wgpu-native\include"},
   @{n="llvm-mingw";  h="552191b5754c49a5a20723276a6fc56541ea1922c4c50b7b669022333fc1b40f"; u="https://github.com/mstorsjo/llvm-mingw/releases/download/20261104/llvm-mingw-20261104-ucrt-x86_64.zip"; from="llvm-mingw-20261104-ucrt-x86_64"; s="llvm-mingw\bin"}
 )
 

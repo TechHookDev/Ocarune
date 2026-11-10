@@ -1,6 +1,6 @@
-# Contributing to Hylia
+# Contributing to Ocarune
 
-Hylia is a static recompilation of the Switch 2 *The Legend of Zelda: Ocarina of Time* remake: the game's AArch64
+Ocarune is a static recompilation of the Switch 2 *The Legend of Zelda: Ocarina of Time* remake: the game's AArch64
 code is lifted to C, the Horizon OS and NVN2 are implemented natively, and the GPU work is replayed on Vulkan. No
 emulator is involved, and the game is built on your PC from your own copy.
 
@@ -15,7 +15,7 @@ never will. That includes:
 
 - the `.nup`, `romfs`, `exefs`, `.nso`, `.nca`, `.nsp`, `.xci` or `.nsz`/`.xcz` files, and any title keys;
 - `work/` and everything in it: the extracted dump, `image.bin`, the lifted C, test builds, runs and screenshots;
-- `hylia.exe`, `oot_vk.dll`, `hylia_programs.bin` (and its `hylia_programs.idx`), `hylia_pipelines.bin`,
+- `ocarune.exe`, `oot_vk.dll`, `ocarune_programs.bin` (and its `ocarune_programs.idx`), `ocarune_pipelines.bin`,
   `mkw_vk_pipelines.bin` and other build output;
 - saves (`user/`), `oot_options.ini`, `oot_env.txt` and `language.txt`.
 
@@ -31,19 +31,19 @@ game data, leave it out.
 |---|---|
 | **Test on other hardware** | Windows only. Reports from AMD and Intel cards and other NVIDIA drivers are useful even when everything works. |
 | **Play further** | The tested area is the start of the game. Reaching new areas, cutscenes, menus and items finds problems the developer has not seen. |
-| **Report what is broken** | Use the [issue forms](https://github.com/TechHookDev/Hylia/issues/new/choose): game problem, build problem or idea. Include the version, your hardware, where you were and `oot_log.txt`. |
+| **Report what is broken** | Use the [issue forms](https://github.com/TechHookDev/Ocarune/issues/new/choose): game problem, build problem or idea. Include the version, your hardware, where you were and `oot_log.txt`. |
 | **Send a fix** | Fork, fix, test, open a pull request. Small, focused changes are easiest to review and merge. |
 | **Improve the docs** | The README, the development guide and the design notes are part of the project. Corrections and clearer steps are welcome. |
 
 ## Before you open an issue or a PR
 
-- Try the [newest release](https://github.com/TechHookDev/Hylia/releases/latest) first. It includes every fix before it.
+- Try the [newest release](https://github.com/TechHookDev/Ocarune/releases/latest) first. It includes every fix before it.
 - Search the open issues. If yours is already there, add your details instead of opening another.
 - English, please.
 - One topic per issue or pull request. Do not mix a fix with a refactor or a batch of unrelated changes.
 - Report the version you actually ran: the release name, or the first line of `oot_log.txt`.
 - Test without ReShade, shader-cache tools, overlays and frame-generation injectors when you report a graphics or
-  performance problem. They change what Hylia does.
+  performance problem. They change what Ocarune does.
 
 ## Development setup
 
@@ -60,9 +60,9 @@ about 10 GB of RAM.
    python -m pip install lz4 numpy capstone "unicorn>=2.1,<2.2" zstandard
    ```
 
-2. Get [llvm-mingw](https://github.com/mstorsjo/llvm-mingw) (the `ucrt-x86_64` build) and set `HYLIA_MINGW` to its
+2. Get [llvm-mingw](https://github.com/mstorsjo/llvm-mingw) (the `ucrt-x86_64` build) and set `OCARUNE_MINGW` to its
    folder. Without it the build falls back to emsdk's clang at `C:\emsdk` with Visual Studio's C++ tools and the
-   Windows SDK (`HYLIA_MSVC=1` forces that route).
+   Windows SDK (`OCARUNE_MSVC=1` forces that route).
 
 3. Copy the pieces a clone does not carry from the `tools-v1` release assets (the same zips the installer downloads):
 
@@ -76,7 +76,7 @@ about 10 GB of RAM.
 4. Run everything with `python -I` from the repository root.
 
 The Windows app's **Build workers** choice applies to builds started from that window. **Automatic** keeps the existing
-`HYLIA_JOBS` override, or the build tools' free-memory policy when no override is set. A number overrides it for that
+`OCARUNE_JOBS` override, or the build tools' free-memory policy when no override is set. A number overrides it for that
 build's child process only; more workers need more memory and are not always faster. This choice is not saved: a new
 window, including one started to update a game, uses Automatic again.
 
@@ -84,12 +84,12 @@ window, including one started to update a game, uses Automatic again.
 
 | Command | What it does |
 |---|---|
-| `python -I nx2/make_game.py --nup "C:\path\your-game.nup" --out "C:\Games\Hylia" --language en-US` | Build a complete game folder from a `.nup`. A build takes about 40 minutes. |
-| `python -I nx2/make_game.py --romfs "C:\path\romfs" --exefs "C:\path\exefs" --out "C:\Games\Hylia"` | The same, from extracted folders. |
+| `python -I nx2/make_game.py --nup "C:\path\your-game.nup" --out "C:\Games\Ocarune" --language en-US` | Build a complete game folder from a `.nup`. A build takes about 40 minutes. |
+| `python -I nx2/make_game.py --romfs "C:\path\romfs" --exefs "C:\path\exefs" --out "C:\Games\Ocarune"` | The same, from extracted folders. |
 | `python -I nx2/make_game.py --check --nup "C:\path\your-game.nup"` | Check the game and its version without building. |
 | `python -I nx2/dump.py --dump <folder with exefs/ and romfs/> --set` | Record the dump in `work/dump.txt`. |
 | `python -I nx2/lift.py --standalone --write` | Lift the game to C in `work/sa/gen`. |
-| `python -I nx2/build.py --standalone --jobs 4` | Compile `work/sa/build/hylia.exe` and `oot_vk.dll`. |
+| `python -I nx2/build.py --standalone --jobs 4` | Compile `work/sa/build/ocarune.exe` and `oot_vk.dll`. |
 | `powershell -File scripts/run-vk.ps1 -Window -Seconds 120` | Run the standalone build with the Vulkan back end and take screenshots in `work/runs/<name>/shots`. |
 | `python -I scripts/prof.py <stacks file>` | Read a profile sampled with `HOS_SAMPLE` and `HOS_SAMPLE_FILE`. |
 
@@ -112,7 +112,7 @@ failure's output. Name a check to run only the ones whose path contains it (`pyt
 `test_*.py` file is picked up by itself: no workflow to edit.
 
 Some checks compile a small C or C++ fixture and need a compiler (`g++`, `gcc` or `clang++` on PATH), the SPIR-V
-validator (`spirv-val`), the SPIR-V or Vulkan headers (`HYLIA_SPIRV_HEADERS` / `HYLIA_VULKAN_HEADERS`, or the CPM
+validator (`spirv-val`), the SPIR-V or Vulkan headers (`OCARUNE_SPIRV_HEADERS` / `OCARUNE_VULKAN_HEADERS`, or the CPM
 cache in `RX_CPM` or `build-linux/deps/cpm`), or the `zstandard` package. A check whose tool is missing is skipped and
 says so; CI passes `--strict`, which fails it instead. The skip list at the top of `tests/run_all.py` names the checks
 that cannot run in CI (a GPU, the game, a Visual Studio prompt) and the few that run on Linux only; `--no-skip` runs
@@ -188,7 +188,7 @@ the trailers that describe it; if you wrote the change yourself, there is nothin
 
 ## Licensing
 
-Hylia is free software under the [GNU General Public License, version 3 or later](LICENSE). By submitting a change
+Ocarune is free software under the [GNU General Public License, version 3 or later](LICENSE). By submitting a change
 you agree to license it under those terms. Only send code you can license that way. Do not paste code from a project
 with an incompatible license, and do not paste decompiled game code or anything generated from the dump into a PR.
 
@@ -197,8 +197,8 @@ keep their own notices. Preserve them, and do not relicense their code.
 
 ## Where to talk
 
-- **Issues:** [use the forms](https://github.com/TechHookDev/Hylia/issues/new/choose).
-- **Newest release:** https://github.com/TechHookDev/Hylia/releases/latest.
+- **Issues:** [use the forms](https://github.com/TechHookDev/Ocarune/issues/new/choose).
+- **Newest release:** https://github.com/TechHookDev/Ocarune/releases/latest.
 
 Thanks for testing, reporting and sending fixes. Every report from a different GPU and every area played further than
 before moves the port forward.

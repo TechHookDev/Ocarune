@@ -66,7 +66,7 @@ class FailureReasonTests(unittest.TestCase):
 class ChildExitTests(unittest.TestCase):
     def run_child(self, body):
         output, forwarded = io.StringIO(), []
-        with tempfile.TemporaryDirectory(prefix="hylia-child-exit-") as temporary:
+        with tempfile.TemporaryDirectory(prefix="ocarune-child-exit-") as temporary:
             child = Path(temporary) / "child.py"
             child.write_text(body, encoding="utf-8")
             status = 0

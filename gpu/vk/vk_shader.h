@@ -50,7 +50,7 @@ struct Program {
     bool uses_render_area = false;
     bool uses_push = true;   // (a stage reads the push constants: render area or rescaling)
     bool mesh = false;              // task / mesh stages (VK_EXT_mesh_shader)
-    // (hylia) the GPU has no mesh shaders: the task and mesh stages are compute pipelines, and a generated vertex
+    // (ocarune) the GPU has no mesh shaders: the task and mesh stages are compute pipelines, and a generated vertex
     // stage reads the records they write. Its stages are (task,) mesh, vertex, fragment.
     bool fallback = false;
     bool fallback_task = false;   // (a task stage before the mesh stage: its payloads are per mesh workgroup)
@@ -65,11 +65,11 @@ struct Program {
     struct Answer {
         uint16_t stage, desc;
         uint8_t type;   // Shader::TextureType | 0x80 when the format is integer
-        bool image = false;   // (hylia) a storage image descriptor's: only whether its format is integer
+        bool image = false;   // (ocarune) a storage image descriptor's: only whether its format is integer
     };
     std::vector<Answer> answers;
     uint64_t variant = 0;   // (a hash of the answers: key alone names all the variants of these stages)
-    mutable std::atomic<int64_t> wm_sig{-1};   // (hylia: what its write masks are made from, vk_draw.cpp program_wm_sig; -1: not asked yet)
+    mutable std::atomic<int64_t> wm_sig{-1};   // (ocarune: what its write masks are made from, vk_draw.cpp program_wm_sig; -1: not asked yet)
 };
 
 enum class ProgramKind { Graphics, Compute, Mesh };
@@ -78,9 +78,9 @@ enum class ProgramKind { Graphics, Compute, Mesh };
 /// color_types: the attachments' Shader::AttributeType (Float / SignedInt / UnsignedInt), for the fragment outputs.
 /// Graphics programs may come back not ready yet (translation queued): the draw leaves itself out or program_wait()s.
 const Program* program_for(const NvnState& s, ProgramKind kind, const uint8_t color_types[8]);
-uint64_t compute_code_key(const NvnState& s);   // (hylia) the bound compute program's code key, 0: none
-std::string program_textures(const NvnState& s, const Program& p);   // (hylia, for logs)
-std::string program_code_keys(const NvnState& s);   // (hylia) " stage:key" for each of the bound program's codes
+uint64_t compute_code_key(const NvnState& s);   // (ocarune) the bound compute program's code key, 0: none
+std::string program_textures(const NvnState& s, const Program& p);   // (ocarune, for logs)
+std::string program_code_keys(const NvnState& s);   // (ocarune) " stage:key" for each of the bound program's codes
 const Program* program_pick(const NvnState& s, ProgramKind kind, const uint8_t color_types[8]);   // (program_for without its cache)
 void program_wait(const Program* p);
 uint64_t program_cache_stamp();   // (what the kept programs and pipelines are good for)
@@ -91,14 +91,14 @@ void seed_close();
 /// Program i of the seed, translated and kept for the default state (null: kept already, or it does not translate); its modules are yours
 std::unique_ptr<Program> seed_program(size_t i, int inputs = 0);
 bool seed_is_compute(size_t i);
-/// (hylia) Seed program i, a compute program, kept in oot_programs.bin with every texture variant its questions can make (up
+/// (ocarune) Seed program i, a compute program, kept in oot_programs.bin with every texture variant its questions can make (up
 /// to cap variants); made is given each variant not kept before
 struct SeedVariants {
     size_t variants = 0, questions = 0;
     bool kept = false, failed = false, capped = false;
 };
 SeedVariants seed_compute(size_t i, size_t cap, const std::function<void(Program&)>& made);
-/// (hylia, the prediction: vk_predict.cpp) a kept graphics program variant as oot_programs.bin has it: each stage's SPIR-V
+/// (ocarune, the prediction: vk_predict.cpp) a kept graphics program variant as oot_programs.bin has it: each stage's SPIR-V
 struct KeptProgram {
     uint64_t key = 0, variant = 0;
     bool mesh = false;

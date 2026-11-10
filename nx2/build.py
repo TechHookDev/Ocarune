@@ -1,4 +1,4 @@
-"""Compile the lifted game (work/gen, from `lift.py --write`) into work/build/hylia_game.dll (or a static library).
+"""Compile the lifted game (work/gen, from `lift.py --write`) into work/build/ocarune_game.dll (or a static library).
 
 The flags are a64-kit's for lifted code (its build.py, cmd_native): -O1, LoopRotate's header copies capped (most of
 the compile time in goto-dense giant functions otherwise), capture tracking past LLVM's 100 uses (the context
@@ -6,21 +6,21 @@ parameter is A64_NOESC), one section per function. The guest model is the 64-bit
 vendored rt/, with the loop-header interrupt polls on (A64_POLLING, nx2/poll.py). Incremental: an object is rebuilt
 only when its source or the flags changed.
 
-hylia_game.dll = the lifted chunks + a64-kit's tables and runtime + nx2/rt/eden_shim.c (the emulator ABI, mkw_host.h)
+ocarune_game.dll = the lifted chunks + a64-kit's tables and runtime + nx2/rt/eden_shim.c (the emulator ABI, mkw_host.h)
 + mkw_info.c (the image base and main's build id, generated here from work/image/image.json). Linking it is also the
 check that the whole lifted game closes over itself: any unresolved symbol fails the link.
 
 Heavy: 44 chunks of ~25 MB, ~100-200 s and ~2-3.5 GB each at -O1. The PC is shared with games: run it when the
 machine is idle, and keep --jobs low otherwise.
 
---standalone builds work/sa/build/hylia.exe instead: the standalone lift (work/sa/gen, `lift.py --standalone --write`)
+--standalone builds work/sa/build/ocarune.exe instead: the standalone lift (work/sa/gen, `lift.py --standalone --write`)
 + the native runtime in host/ (TOTKPort's hos/, adapted). Objects are cached by their key in work/objcache, shared by
 both builds: the two lifts share their chunk boundaries, so every chunk without a hooked function is the same source
 and is not compiled twice.
 
 Usage:  python -I nx2/build.py [--jobs 1] [--only 0,7] [--opt O1] [--no-polls] [--dll] [--lib] [--standalone]
-  --only: just these code_NNN.c chunks (to measure); --dll: link hylia_game.dll; --lib: archive hylia_game.lib
-  HYLIA_TIMES=<build_times.json>: make_game.py's record of the earlier builds. With it, this run says which files it
+  --only: just these code_NNN.c chunks (to measure); --dll: link ocarune_game.dll; --lib: archive ocarune_game.lib
+  OCARUNE_TIMES=<build_times.json>: make_game.py's record of the earlier builds. With it, this run says which files it
   really rebuilds and how long each took before (@@plan, @@file, @@eta), which the builder windows show as a countdown.
 """
 import argparse
@@ -45,18 +45,18 @@ NX2_RT = os.path.join(kit.HERE, "rt")
 HOST = os.path.join(kit.HERE, "..", "host")
 OPUS = os.path.join(kit.HERE, "..", "third_party", "opus")
 OBJ_CACHE = os.path.join(kit.WORK, "objcache")
-# (hylia) work/hot_order.txt: the functions that run, hottest first (sampled), packed together by the linker; RX_NO_ORDER=1: off
+# (ocarune) work/hot_order.txt: the functions that run, hottest first (sampled), packed together by the linker; RX_NO_ORDER=1: off
 PGO = os.environ.get("RX_PGO", "")
 
 
 # (linux) Linux builds: an ELF executable and oot_vk.so, the Win32 calls of host/ and gpu/vk on POSIX
-# (host/posix: its windows.h is found first), the window and sound on SDL2. HYLIA_SYSROOT=<dir>: compile and link
+# (host/posix: its windows.h is found first), the window and sound on SDL2. OCARUNE_SYSROOT=<dir>: compile and link
 # against that root (the AppImage's: glibc 2.35, so the game runs on older systems than the one that built it).
-# HYLIA_VK_PREBUILT=<oot_vk.so>: the Vulkan back end as built already (the AppImage's), not compiled here.
-LINUX = not toolchain.windows()   # (hylia: RX_TARGET=windows on Linux builds the Windows game, with llvm-mingw)
+# OCARUNE_VK_PREBUILT=<oot_vk.so>: the Vulkan back end as built already (the AppImage's), not compiled here.
+LINUX = not toolchain.windows()   # (ocarune: RX_TARGET=windows on Linux builds the Windows game, with llvm-mingw)
 POSIX = os.path.join(kit.HERE, "..", "host", "posix")
-SYSROOT = os.environ.get("HYLIA_SYSROOT", "")
-EXE = "hylia" if LINUX else "hylia.exe"
+SYSROOT = os.environ.get("OCARUNE_SYSROOT", "")
+EXE = "ocarune" if LINUX else "ocarune.exe"
 VK_LIB = "oot_vk.so" if LINUX else "oot_vk.dll"
 
 
@@ -266,7 +266,7 @@ class MemoryGate:
     """(issue 418) Compilers started by the memory there is, not only by --jobs: one per CPU thread ran PCs out of memory (the kernel
     stopped a compiler, or the whole build), and a count low enough for the biggest files and the PC's other programs left most of
     the threads idle. A compile starts when the memory free, less what the compilers running may still take on top of what they
-    hold now (mem_need), keeps its own need and HYLIA_MEM_RESERVE_GB (default 1.5) free. The floor is make_game's before this:
+    hold now (mem_need), keeps its own need and OCARUNE_MEM_RESERVE_GB (default 1.5) free. The floor is make_game's before this:
     on Windows up to 4 (half the threads on smaller CPUs) always run, as Windows pages rather than fails (issues 502, 503, 511: 1-2
     compilers on 16 GB PCs took hours); on Linux one (issue 531: Linux stops a compiler that does not fit, and it is compiled again
     alone). The free memory is read again as compiles start and end, so a game or browser opened during the build makes later
@@ -275,7 +275,7 @@ class MemoryGate:
     def __init__(self):
         self.cv = threading.Condition()
         self.running = {}   # (src: [need, Popen or None])
-        self.reserve = float(os.environ.get("HYLIA_MEM_RESERVE_GB") or 1.5) * 1024
+        self.reserve = float(os.environ.get("OCARUNE_MEM_RESERVE_GB") or 1.5) * 1024
         self.floor = max(1, min(4, (os.cpu_count() or 2) // 2)) if os.name == "nt" else 1
 
     def enter(self, src):
@@ -314,14 +314,14 @@ GATE = None   # (main's MemoryGate; None: compiles start as the jobs allow)
 
 FFMPEG = next((os.path.join(d, n) for d in [os.path.join(r, "ffmpeg") for r in cpm_dirs()] if os.path.isdir(d)
                for n in sorted(os.listdir(d)) if os.path.isdir(os.path.join(d, n, "lib"))
-               and "linux" not in n.lower()), None)   # (hylia: a cache with both systems' builds, cross-building)
+               and "linux" not in n.lower()), None)   # (ocarune: a cache with both systems' builds, cross-building)
 FFMPEG_LIBS = ("avcodec", "swscale", "swresample", "avutil")
 
 
 def ffmpeg_linux():
-    """(linux) FFmpeg's compile and link flags: HYLIA_FFMPEG=<prefix> with static libraries (the AppImage's, with
+    """(linux) FFmpeg's compile and link flags: OCARUNE_FFMPEG=<prefix> with static libraries (the AppImage's, with
     dav1d for OoT's AV1 movies), else the system's through pkg-config; None without either"""
-    pre = os.environ.get("HYLIA_FFMPEG")
+    pre = os.environ.get("OCARUNE_FFMPEG")
     if pre and os.path.exists(os.path.join(pre, "lib", "libavcodec.a")):
         libs = [os.path.join(pre, "lib", "lib%s.a" % l) for l in FFMPEG_LIBS]
         libs += [os.path.join(pre, "lib", "libdav1d.a")] if os.path.exists(os.path.join(pre, "lib", "libdav1d.a")) else []
@@ -365,7 +365,7 @@ def ffmpeg_version_key():
 # four: the race's replay waited ~12 ms a frame for it). RX_SOFT_WRITE_WATCH=0: Windows' write watch (a full rebuild)
 WRITE_TRACK = [] if os.environ.get("RX_SOFT_WRITE_WATCH") == "0" else ["-DA64_WRITE_TRACK"]
 
-# (hylia) the host CPU the lifted game and the runtime are built for: x86-64-v3 (AVX2, FMA, BMI1/2, LZCNT,
+# (ocarune) the host CPU the lifted game and the runtime are built for: x86-64-v3 (AVX2, FMA, BMI1/2, LZCNT,
 # MOVBE; Haswell and Zen 1 on). With FMA the FPX1 fast paths cover double-precision FMA (RECOMP_FPX_FMA64; it took
 # the exact software body on baseline x86-64) and the bit counts are single instructions. No contraction, so a C
 # expression is rounded as written (the exact bodies and FPX1's proofs assume it). RX_MARCH=x86-64: the old baseline
@@ -503,7 +503,7 @@ def migrate_stamps(gen, obj_dir, fl, deps):
 PLANNED = {}   # (src, obj) -> the object key plan_jobs worked out, so compile_one does not hash every source again
 
 
-# (hylia) the order of the compile: the longest first (LPT), so no long one starts late and runs alone at the end. The lift's
+# (ocarune) the order of the compile: the longest first (LPT), so no long one starts late and runs alone at the end. The lift's
 # estimate (gen/chunk_costs.txt, nx2/chunks.py fn_cost: functions cost with the square of their size) where it is there, else the size.
 # HOT_COST: how much longer the hot flags (-O2, the profile, the hot callees inlined) take for the same estimate. Fitted to a cold build
 # on a 24-thread desktop; by size alone the hot pieces (9 MB, up to 333 s) started after every 25 MB chunk (45 s)
@@ -583,7 +583,7 @@ def main():
     rt64 = rtgen.write(os.path.join(out, "rt64"))
     cc = toolchain.need(toolchain.find("clang"))
     fl = flags(gen, rt64, a.opt, not a.no_polls)
-    # (which Hylia this is, for the log's first line and the Insert menu: given to those two files only, so a new
+    # (which Ocarune this is, for the log's first line and the Insert menu: given to those two files only, so a new
     # release name rebuilds them and nothing else)
     stamp_def = version.define()
     print("version: %s" % version.describe(), flush=True)
@@ -620,10 +620,10 @@ def main():
     # the longest first, so the long ones do not end up alone at the end (compile_cost)
     costs = chunk_costs(gen)
     srcs.sort(key=lambda s: -compile_cost(s, costs))
-    # (hylia) code_hot.c, the lift's hot functions together (A64_HOT_FUNCS + A64_HOT_CHUNK=1): at RX_HOT_OPT
+    # (ocarune) code_hot.c, the lift's hot functions together (A64_HOT_FUNCS + A64_HOT_CHUNK=1): at RX_HOT_OPT
     # (default O2), so the hot callees inline into their hot callers
     hot_fl = [("-" + os.environ.get("RX_HOT_OPT", "O2")) if f == "-" + a.opt else f for f in fl]
-    # (hylia) RX_PGO=gen: code_hot.c counts its branches (host/pgo_rt.c writes them; -O1 builds much sooner, and the counters are
+    # (ocarune) RX_PGO=gen: code_hot.c counts its branches (host/pgo_rt.c writes them; -O1 builds much sooner, and the counters are
     # placed before the optimiser, so a profile from it fits the -O2 build). RX_PGO=<merged .prof>: built with that profile
     if PGO == "gen":
         hot_fl = [f if f != "-O2" else "-O1" for f in hot_fl] + ["-fprofile-instr-generate", "-mllvm", "-disable-vp=true"]
@@ -631,7 +631,7 @@ def main():
         # (the profile's contents in the flags the object key hashes: its path alone stays the same across releases, so an update with a
         # new profile kept the hot code built from the old one)
         with open(PGO, "rb") as f:
-            hot_fl = hot_fl + ["-fprofile-instr-use=" + PGO, "-DHYLIA_PROFILE_SHA1=" + hashlib.sha1(f.read()).hexdigest()[:16]]
+            hot_fl = hot_fl + ["-fprofile-instr-use=" + PGO, "-DOCARUNE_PROFILE_SHA1=" + hashlib.sha1(f.read()).hexdigest()[:16]]
     jobs = [(cc, s, os.path.join(obj_dir, os.path.basename(s)[:-2] + ".o"),
              hot_fl if os.path.basename(s).startswith("code_hot") else fl,
              shim_deps if os.path.dirname(s) == NX2_RT else deps) for s in srcs]
@@ -683,7 +683,7 @@ def main():
     # the Vulkan back end, a DLL of its own (RX_BACKEND=vulkan): built when the Vulkan headers are in the CPM cache
     vk_jobs = []
     vk_headers, spirv_headers = cpm_package("vulkanheaders"), cpm_package("spirv-headers")
-    vk_prebuilt = os.environ.get("HYLIA_VK_PREBUILT", "")
+    vk_prebuilt = os.environ.get("OCARUNE_VK_PREBUILT", "")
     if a.standalone and not a.only and vk_prebuilt:
         print("the Vulkan back end: %s, as built" % vk_prebuilt)
     elif a.standalone and not a.only and vk_headers and spirv_headers:
@@ -696,13 +696,13 @@ def main():
         for f in sorted(translator) + [os.path.join(vk, n) for n in ("vk_shader.cpp", "vk_bank.cpp", "vk_state.h", "vk_api.h")]:
             with open(f, "rb") as src:
                 stamp.update(os.path.relpath(f, vk).replace("\\", "/").encode() + src.read().replace(bytes((13, 10)), bytes((10,))))
-        shader_stamp = "-DHYLIA_SHADER_STAMP=0x%sull" % stamp.hexdigest()[:16]
-        vflags = target() + CPU + (["-fPIC", "-I" + POSIX, "-D_GNU_SOURCE"] if LINUX else []) + [   # (hylia: the replay is the frame's limit now)
+        shader_stamp = "-DOCARUNE_SHADER_STAMP=0x%sull" % stamp.hexdigest()[:16]
+        vflags = target() + CPU + (["-fPIC", "-I" + POSIX, "-D_GNU_SOURCE"] if LINUX else []) + [   # (ocarune: the replay is the frame's limit now)
             # (what the code takes for granted, which newer C++ libraries bring in by themselves and older ones do not: issue 48)
             "-include", "algorithm", "-include", "cstdio", "-include", "cstdlib", "-include", "cstring", "-include", "functional",
             "-include", "string", "-include", "vector",
             "-std=c++20", "-O2", "-g0", "-DNDEBUG", "-Wno-everything", "-DVK_NO_PROTOTYPES", "-DMKWVK_BUILDING",
-            *(["-DHYLIA_RELEASE"] if os.environ.get("RX_RELEASE") == "1" else []),   # (the shaders precompiled before the game)
+            *(["-DOCARUNE_RELEASE"] if os.environ.get("RX_RELEASE") == "1" else []),   # (the shaders precompiled before the game)
             # (Eden's recompiler before suyu's root: suyu has its own shader_recompiler/ headers, and a Shader::Info
             # of the other layout in some objects is what crashed the descriptor walk. MKWVK_INCLUDES changes the
             # object keys, which leave the include folders out, when this order changes)
@@ -735,13 +735,13 @@ def main():
     vk_only = bool(os.environ.get("RX_VK_ONLY"))   # (the renderer alone, the game's objects as they are)
     if vk_only:
         jobs = list(vk_jobs)
-    # (the builder's compile timer: HYLIA_TIMES is make_game.py's record of the earlier builds on this PC. With it,
+    # (the builder's compile timer: OCARUNE_TIMES is make_game.py's record of the earlier builds on this PC. With it,
     # this run says which files it really rebuilds and how long each took before, and the builder shows the rest of the
     # compile as a countdown that follows this PC's own measurements. Run by hand, it prints none of these lines.)
     global GATE
-    GATE = None if os.environ.get("HYLIA_MEM_GATE") == "0" else MemoryGate()
+    GATE = None if os.environ.get("OCARUNE_MEM_GATE") == "0" else MemoryGate()
     eta_jobs = GATE.expected(a.jobs) if GATE else a.jobs   # (the countdown with the compilers the memory holds, not --jobs)
-    counted, expected, pending = os.environ.get("HYLIA_TIMES"), {}, []
+    counted, expected, pending = os.environ.get("OCARUNE_TIMES"), {}, []
     if counted:
         work_jobs, keys = plan_jobs(jobs)
         PLANNED.update(keys)
@@ -795,11 +795,11 @@ def main():
     rsp = os.path.join(out, "objs.rsp")
     open(rsp, "w", encoding="utf-8").write("\n".join('"%s"' % o.replace("\\", "/") for o in objs))
     if a.lib:
-        lib = os.path.join(out, "hylia_game.lib")
+        lib = os.path.join(out, "ocarune_game.lib")
         subprocess.run([toolchain.lld_link(), "/lib", "/out:" + lib, "@" + rsp], check=True)
         print("wrote %s (%d objects, %d MB)" % (lib, len(objs), os.path.getsize(lib) >> 20))
     if a.standalone and not a.only and not vk_only and LINUX:
-        exe = os.path.join(out, EXE)   # (+ hylia.map: crash offsets -> f_<guest address>)
+        exe = os.path.join(out, EXE)   # (+ ocarune.map: crash offsets -> f_<guest address>)
         t = time.time()
         # (--export-dynamic-symbol: the window's state, which the Vulkan back end's own Win32 calls read by name)
         r = subprocess.run([cc] + target() + ["-fuse-ld=lld", "-o", exe, "-Wl,-Map=" + exe + ".map", "-Wl,--gc-sections",
@@ -813,17 +813,17 @@ def main():
             print("\n".join(undefined[:60]) if undefined else (r.stdout + r.stderr)[-3000:])
             return 1
         print("linked %s: %d MB (%.0fs)" % (exe, os.path.getsize(exe) >> 20, time.time() - t))
-        sdl = os.environ.get("HYLIA_SDL2", "")   # (libSDL2-2.0.so.0 beside it, when the AppImage brings one)
+        sdl = os.environ.get("OCARUNE_SDL2", "")   # (libSDL2-2.0.so.0 beside it, when the AppImage brings one)
         if sdl and os.path.exists(sdl):
             import shutil
             shutil.copyfile(sdl, os.path.join(out, "libSDL2-2.0.so.0"))
     elif a.standalone and not a.only and not vk_only:
-        exe = os.path.join(out, "hylia.exe")   # (+ hylia.map: crash offsets -> f_<guest address>)
+        exe = os.path.join(out, "ocarune.exe")   # (+ ocarune.map: crash offsets -> f_<guest address>)
         t = time.time()
         r = subprocess.run([cc] + toolchain.native_target() + toolchain.native_link() +
                            ["-o", exe, toolchain.link_opt("/map:" + exe[:-4] + ".map"), toolchain.link_opt("/stack:8388608"), "@" + rsp] + HOT_ORDER() + HOST_LIBS +
                            ([toolchain.link_opt("/nodefaultlib:clang_rt.profile.lib")] if PGO == "gen" else []) +
-                           ([os.path.join(kit.WORK, "hylia.res")] if os.path.exists(os.path.join(kit.WORK, "hylia.res")) else []) +   # (nx2/make_icon.py)
+                           ([os.path.join(kit.WORK, "ocarune.res")] if os.path.exists(os.path.join(kit.WORK, "ocarune.res")) else []) +   # (nx2/make_icon.py)
                            ([toolchain.link_opt("/subsystem:windows"), toolchain.link_opt("/entry:mainCRTStartup")] if os.environ.get("RX_RELEASE") == "1" else []) +   # (no console window)
                            ([os.path.join(WGPU, "lib", "wgpu_native.dll.lib")] if wgpu else []) +
                            ([os.path.join(FFMPEG, "lib", l + ".lib") for l in ("avcodec", "swscale", "swresample", "avutil")] +
@@ -841,13 +841,13 @@ def main():
             dll, dst = os.path.join(WGPU, "lib", "wgpu_native.dll"), os.path.join(out, "wgpu_native.dll")
             if not os.path.exists(dst) or os.path.getsize(dst) != os.path.getsize(dll):
                 shutil.copyfile(dll, dst)
-        # (hylia) a shared FFmpeg's DLLs beside it (an LGPL shared build, as cross builds find: the static one needs none)
+        # (ocarune) a shared FFmpeg's DLLs beside it (an LGPL shared build, as cross builds find: the static one needs none)
         for l in FFMPEG_LIBS if FFMPEG and os.path.isdir(os.path.join(FFMPEG, "bin")) else ():
             import shutil
             for f in os.listdir(os.path.join(FFMPEG, "bin")):
                 if f.startswith(l + "-") and f.endswith(".dll"):
                     shutil.copyfile(os.path.join(FFMPEG, "bin", f), os.path.join(out, f))
-        # (hylia) SDL2.dll beside it: host/pad_sdl.c's controllers (DualSense, DualShock 4, Switch Pro ...)
+        # (ocarune) SDL2.dll beside it: host/pad_sdl.c's controllers (DualSense, DualShock 4, Switch Pro ...)
         sdl = os.path.join(kit.HERE, "..", "third_party", "sdl2", "SDL2.dll")
         sdl_dst = os.path.join(out, "SDL2.dll")
         if os.path.exists(sdl) and (not os.path.exists(sdl_dst) or os.path.getsize(sdl_dst) != os.path.getsize(sdl)):
@@ -883,7 +883,7 @@ def main():
             return 1
         print("linked %s: %d MB (%.0fs)" % (vdll, os.path.getsize(vdll) >> 20, time.time() - t))
     if a.dll and not a.only:
-        dll = os.path.join(out, "hylia_game.dll")   # (+ hylia_game.map: crash offsets -> f_<guest address>)
+        dll = os.path.join(out, "ocarune_game.dll")   # (+ ocarune_game.map: crash offsets -> f_<guest address>)
         t = time.time()
         r = subprocess.run([cc] + toolchain.native_target() + toolchain.native_link() +
                            ["-shared", "-o", dll, toolchain.link_opt("/map:" + dll[:-4] + ".map"), "@" + rsp],

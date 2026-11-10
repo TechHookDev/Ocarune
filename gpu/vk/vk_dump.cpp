@@ -26,7 +26,7 @@ struct Item {
     void* map = nullptr;
     uint32_t w = 0, h = 0, src_w = 0, src_h = 0;
     Kind kind = KIND_FLOAT;
-    bool rgb9e5 = false;   // (hylia, RX_VK_DUMP_9E5: an R11G11B10 image's words read as RGB9E5)
+    bool rgb9e5 = false;   // (ocarune, RX_VK_DUMP_9E5: an R11G11B10 image's words read as RGB9E5)
     int depth_bytes = 0;   // (a depth image: copied as it is, w x h = the level's; 2 = D16, 4 = D32F or D24 in 32 bits)
     bool depth_float = false;
     VkFormat format = VK_FORMAT_UNDEFINED;

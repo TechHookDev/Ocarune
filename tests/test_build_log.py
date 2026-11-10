@@ -18,7 +18,7 @@ spec.loader.exec_module(make_game)
 
 class BuildLogTests(unittest.TestCase):
     def setUp(self):
-        temporary = tempfile.TemporaryDirectory(prefix="hylia-log-")
+        temporary = tempfile.TemporaryDirectory(prefix="ocarune-log-")
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)
         self.log = self.root / "build log \u6f22.txt"
@@ -142,7 +142,7 @@ class BuildLogTests(unittest.TestCase):
             with self.subTest(jobs=jobs):
                 ran = subprocess.run(make_game.PY + [str(SOURCE), "--log=" + str(self.log),
                                      "--work", str(self.root / "work")] + jobs,
-                                     env=dict(os.environ, HYLIA_JOBS=""),
+                                     env=dict(os.environ, OCARUNE_JOBS=""),
                                      capture_output=True, text=True, encoding="utf-8", timeout=30)
                 self.assertEqual(ran.returncode, 1, ran.stdout + ran.stderr)
                 self.assertIn("needs --out", ran.stdout)

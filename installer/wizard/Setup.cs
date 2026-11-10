@@ -1,4 +1,4 @@
-// Hylia: Ocarina of Time on PC. Setup wizard: a window around install.ps1 (next to this exe).
+// Ocarune: Ocarina of Time on PC. Setup wizard: a window around install.ps1 (next to this exe).
 // Build: csc /target:winexe /win32icon:oot.ico /out:Setup.exe Setup.cs /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:Microsoft.CSharp.dll
 // Check the look without installing: Setup.exe --shot <folder>   (writes one PNG per page)
 using System; using System.Diagnostics; using System.Drawing; using System.Drawing.Drawing2D; using System.IO; using System.Runtime.InteropServices; using System.Windows.Forms;
@@ -31,8 +31,8 @@ class Setup : Form {
 
     static bool Packed(string d) { return Demo || (File.Exists(Path.Combine(d, "install.ps1")) && Directory.Exists(Path.Combine(d, "src"))); }
     Setup() {
-        if (!Packed(here)) { string alt = Path.GetFullPath(Path.Combine(here, @"..\Hylia-Setup")) + @"\"; if (Packed(alt)) here = alt; }   // (run from the build folder: use the packaged one next to it)
-        Text = "Hylia Setup"; ClientSize = new Size(S(W), S(H)); FormBorderStyle = FormBorderStyle.FixedSingle;
+        if (!Packed(here)) { string alt = Path.GetFullPath(Path.Combine(here, @"..\Ocarune-Setup")) + @"\"; if (Packed(alt)) here = alt; }   // (run from the build folder: use the packaged one next to it)
+        Text = "Ocarune Setup"; ClientSize = new Size(S(W), S(H)); FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false; StartPosition = FormStartPosition.CenterScreen; BackColor = Bg; ForeColor = Txt; Font = fBody; DoubleBuffered = true; AllowDrop = true;
         try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
         hero = new HeroPanel { Bounds = new Rectangle(0, 0, S(HeroW), S(H)) }; Controls.Add(hero);
@@ -58,7 +58,7 @@ class Setup : Form {
 
     // ---- pages ----
     void BuildWelcome() {
-        Head(0, "Welcome to Hylia", "Ocarina of Time, native on your PC.");
+        Head(0, "Welcome to Ocarune", "Ocarina of Time, native on your PC.");
         Para(0, "This sets up a native Windows version of the game from your own copy, tuned for high resolution and a smooth frame rate. It takes a while once; after that you just press Play.", Pad, 100, CW, 66, Txt);
         string[,] req = Checks(); int tw = (CW - 12) / 2;
         for (int i = 0; i < 4; i++) {
@@ -111,7 +111,7 @@ class Setup : Form {
         pages[2].Controls.Add(log);
     }
     void BuildDone() {
-        Head(3, "You're ready", "Hylia is installed.");
+        Head(3, "You're ready", "Ocarune is installed.");
         pages[3].Controls.Add(new Badge { Bounds = new Rectangle(S(Pad), S(108), S(52), S(52)) });
         pages[3].Controls.Add(new Label { Text = "Installation complete", Font = fSemi, ForeColor = Txt, AutoSize = true, Location = new Point(S(Pad + 66), S(110)) });
         doneDir.ForeColor = Dim; doneDir.Font = fSmall; doneDir.SetBounds(S(Pad + 66), S(138), S(CW - 66), S(22)); pages[3].Controls.Add(doneDir);
@@ -455,7 +455,7 @@ class Setup : Form {
             }
             TextRenderer.DrawText(g, "Native on your PC.\nUp to 4K, frame generation,\nFSR upscaling.", fBody, new Rectangle(S(Pad), S(348), Width - S(Pad) - S(20), S(70)), Dim, TextFormatFlags.WordBreak | TextFormatFlags.NoPadding);
             TextRenderer.DrawText(g, "Free and open source  \u00b7  GPL-3.0", fSmall, new Point(S(Pad), Height - S(62)), Faint, TextFormatFlags.NoPadding);
-            TextRenderer.DrawText(g, "github.com/TechHookDev/Hylia", fSmall, new Point(S(Pad), Height - S(42)), Dim, TextFormatFlags.NoPadding);
+            TextRenderer.DrawText(g, "github.com/TechHookDev/Ocarune", fSmall, new Point(S(Pad), Height - S(42)), Dim, TextFormatFlags.NoPadding);
         }
     }
     [STAThread] static void Main(string[] a) {

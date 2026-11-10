@@ -705,7 +705,7 @@ class Lifter:
         self.hooks = dict(img.hooks)
         self.names = getattr(img, "names", {}) or {}
         self.comments = comments
-        # (hylia) C emitted right after the instruction at a guest address ({pc: text}): a game patch that adds to an
+        # (ocarune) C emitted right after the instruction at a guest address ({pc: text}): a game patch that adds to an
         # instruction instead of replacing a function (nx2/oot_wide.py). Only after plain instructions (kind "op")
         self.after = {}
         self.funcs = {}       # entry -> (body {pc: kind}, labels set)
@@ -751,7 +751,7 @@ class Lifter:
     SETJMP_NAMES = ("__setjmp", "setjmp", "_setjmp")
 
     def find_setjmp_owners(self):
-        """(hylia) the functions that call __setjmp, with the call's return addresses: entries (walked here), so
+        """(ocarune) the functions that call __setjmp, with the call's return addresses: entries (walked here), so
         a longjmp can run the owner's code after its setjmp (emit_function wraps the owner's callers)"""
         self.setjmp_owner = {}
         for e, (body, _) in list(self.funcs.items()):
@@ -1410,7 +1410,7 @@ class Lifter:
             elif kind == "bl":
                 t = self.callee(k[1])
                 if t in self.entries and t in getattr(self, "setjmp_owner", {}):
-                    # (hylia) a call of a function that calls __setjmp: this frame takes a host setjmp. A guest
+                    # (ocarune) a call of a function that calls __setjmp: this frame takes a host setjmp. A guest
                     # longjmp's BR to one of the owner's setjmp return addresses comes back here (host/hos_setjmp.c),
                     # with the registers it restored, and runs the owner's code from there, as the owner would.
                     # (recomp_sj_setjmp, not __builtin_setjmp: on Win64 clang's frame pointer sits above the frame

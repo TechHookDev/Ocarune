@@ -41,7 +41,7 @@ struct DrawArgs {
     // mesh shading (NVN2 task / mesh programs): workgroups, or indirect as above
     bool mesh = false;
     int groups[3] = {0, 1, 1};
-    int first_task = 0;   // (hylia: a direct mesh draw's first task workgroup, NVN's DrawMeshTasks(first, count))
+    int first_task = 0;   // (ocarune: a direct mesh draw's first task workgroup, NVN's DrawMeshTasks(first, count))
 };
 
 /// A recording starts (its slot's descriptor pool and upload stream are reset); value: the timeline value it signals
@@ -58,11 +58,11 @@ void clear_depth_stencil(VkCommandBuffer cmd, NvnState& s, float depth, bool dep
 void clear_stats(int64_t* clears, int64_t* masked);
 /// indirect: the workgroup counts' GPU address (x, y, z unused)
 void dispatch(VkCommandBuffer cmd, NvnState& s, uint32_t x, uint32_t y, uint32_t z, uint64_t indirect);
-void dry_mark_written(NvnState& s, bool compute, bool first);   // (hylia: the parallel replay's dry pass)
+void dry_mark_written(NvnState& s, bool compute, bool first);   // (ocarune: the parallel replay's dry pass)
 void draw_stats(int64_t* draws, int64_t* skipped, int64_t* dispatches, int64_t* pipelines);
 void draw_stats2(int64_t* passes, int64_t* mesh, double* pipeline_ms);
 void draw_stats3(int64_t* pending_skips, int64_t* waits, double* wait_ms);
-void draw_skip_report(double frames);   // (hylia) skips by the line that made them
+void draw_skip_report(double frames);   // (ocarune) skips by the line that made them
 int64_t draw_desc_reused();
 /// RX_VK_FLASH_RECORD=<key>,...: the last frames' draws of those programs, written to the log for frames around a flash
 void draw_records_log(uint64_t frame_lo, uint64_t frame_hi);

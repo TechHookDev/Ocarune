@@ -20,7 +20,7 @@ from unittest import mock
 
 
 # The override runs the same regression against the exact original production source.
-SOURCE = Path(os.environ.get("HYLIA_CPP_TEST_SOURCE", Path(__file__).resolve().parents[1] / "nx2" / "make_game.py"))
+SOURCE = Path(os.environ.get("OCARUNE_CPP_TEST_SOURCE", Path(__file__).resolve().parents[1] / "nx2" / "make_game.py"))
 spec = importlib.util.spec_from_file_location("make_game_under_test", SOURCE)
 make_game = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(make_game)
@@ -51,7 +51,7 @@ class CppPreflightTests(unittest.TestCase):
     def setUp(self):
         if COMPILER is None:
             self.fail("Run this check as a script with --cxx (and, on Windows, a configured developer environment)")
-        self.temporary = tempfile.TemporaryDirectory(prefix="hylia-cpp-preflight-")
+        self.temporary = tempfile.TemporaryDirectory(prefix="ocarune-cpp-preflight-")
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name).resolve()
         self.addCleanup(self.assert_owned_fixture)

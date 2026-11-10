@@ -110,7 +110,7 @@ class MouseNativeTests(unittest.TestCase):
         compiler = shutil.which("gcc") or shutil.which("clang")
         if not compiler:
             self.skipTest("no C compiler")
-        with tempfile.TemporaryDirectory(prefix="hylia-mouse-native-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="ocarune-mouse-native-") as tmp:
             tmp = Path(tmp)
             (tmp / "hos.h").write_text(HOS_H, encoding="utf-8")
             # (beside the stand-in hos.h, so its #include "hos.h" finds that one)

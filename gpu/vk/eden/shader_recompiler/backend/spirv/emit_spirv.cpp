@@ -17,7 +17,7 @@
 #include "shader_recompiler/backend/spirv/spirv_emit_context.h"
 #include "shader_recompiler/frontend/ir/basic_block.h"
 #include "shader_recompiler/frontend/ir/program.h"
-#include "shader_recompiler/backend/spirv/mma_layout.h"   // (hylia)
+#include "shader_recompiler/backend/spirv/mma_layout.h"   // (ocarune)
 
 namespace Shader::Backend::SPIRV {
 namespace {
@@ -112,7 +112,7 @@ void EmitInstOf(EmitContext& ctx, IR::Inst* inst) {
 }
 
 void EmitInst(EmitContext& ctx, IR::Inst* inst) {
-    // (hylia) the emitters that are left unimplemented say only "SPIR-V Instruction": name the IR op
+    // (ocarune) the emitters that are left unimplemented say only "SPIR-V Instruction": name the IR op
     try {
         EmitInstOf(ctx, inst);
     } catch (const NotImplementedException& e) {
@@ -264,7 +264,7 @@ spv::ExecutionMode ExecutionMode(TessSpacing spacing) {
 void DefineEntryPoint(const IR::Program& program, EmitContext& ctx, Id main) {
     const std::span interfaces(ctx.interfaces.data(), ctx.interfaces.size());
     if (ctx.mesh_fallback && (program.stage == Stage::Task || program.stage == Stage::Mesh)) {
-        // (hylia, issue 640: on a GPU without mesh shaders, a task or mesh program is a compute shader)
+        // (ocarune, issue 640: on a GPU without mesh shaders, a task or mesh program is a compute shader)
         ctx.AddExecutionMode(main, spv::ExecutionMode::LocalSize, program.workgroup_size[0], 1U, 1U);
         ctx.AddEntryPoint(spv::ExecutionModel::GLCompute, main, "main", interfaces);
         return;
@@ -486,7 +486,7 @@ void SetupCapabilities(const Profile& profile, const Info& info, EmitContext& ct
     if ((!profile.support_vertex_instance_id &&
          (info.loads[IR::Attribute::InstanceId] || info.loads[IR::Attribute::VertexId])) ||
         info.loads[IR::Attribute::BaseInstance] || info.loads[IR::Attribute::BaseVertex] ||
-        info.loads[IR::Attribute::DrawID] || ctx.wants_mesh_first) {   // (hylia: a task program's DrawIndex, its draw's first)
+        info.loads[IR::Attribute::DrawID] || ctx.wants_mesh_first) {   // (ocarune: a task program's DrawIndex, its draw's first)
         ctx.AddExtension("SPV_KHR_shader_draw_parameters");
         ctx.AddCapability(spv::Capability::DrawParameters);
     }
@@ -511,7 +511,7 @@ void SetupCapabilities(const Profile& profile, const Info& info, EmitContext& ct
         ctx.AddCapability(spv::Capability::VulkanMemoryModelDeviceScope);
         ctx.SetMemoryModel(spv::MemoryModel::VulkanKHR);
     }
-    if (info.uses_cooperative_matrix && mma_software) {   // (hylia: DefineSoftwareMatrixFunction's)
+    if (info.uses_cooperative_matrix && mma_software) {   // (ocarune: DefineSoftwareMatrixFunction's)
         ctx.AddCapability(spv::Capability::GroupNonUniform);
         ctx.AddCapability(spv::Capability::GroupNonUniformShuffle);
     }
@@ -662,7 +662,7 @@ std::vector<u32> EmitSPIRV(const Profile& profile, const RuntimeInfo& runtime_in
     EmitContext ctx{profile, runtime_info, program, bindings};
     if (program.info.uses_cooperative_matrix && mma_software) DefineSoftwareMatrixFunction(ctx);
     Id main{};
-    if (runtime_info.mesh_fallback_vertex) {   // (hylia: the fallback's generated vertex stage, which reads the records)
+    if (runtime_info.mesh_fallback_vertex) {   // (ocarune: the fallback's generated vertex stage, which reads the records)
         const Id void_function{ctx.TypeFunction(ctx.void_id)};
         main = ctx.OpFunction(ctx.void_id, spv::FunctionControlMask::MaskNone, void_function);
         ctx.AddLabel();

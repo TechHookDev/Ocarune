@@ -145,7 +145,7 @@ Code read_code(const nvn_stage_data& sd) {
     if (!sd.control || !sd.data || !host->gpu_read(sd.control, ctl, sizeof ctl) || !control_end(ctl, &end)) return Code{};
     std::vector<uint8_t> area(end);
     if (!host->gpu_read(sd.data, area.data(), end)) return Code{};
-    if (const char* dir = getenv("RX_VK_DUMP_STAGES")) {   // (hylia, RX_VK_DUMP_STAGES=<folder>: control and code as the game has them)
+    if (const char* dir = getenv("RX_VK_DUMP_STAGES")) {   // (ocarune, RX_VK_DUMP_STAGES=<folder>: control and code as the game has them)
         char path[512];
         snprintf(path, sizeof path, "%s/%016llx.bin", dir, (unsigned long long)code_key(ctl, area.data(), end));
         if (FILE* f = fopen(path, "wb")) fwrite(ctl, 1, sizeof ctl, f), fwrite(area.data(), 1, end, f), fclose(f);
@@ -190,7 +190,7 @@ Code parse_code(const uint8_t* ctl, const std::vector<uint8_t>& area) {
         if (r == Shader::Ampere::ProgramCaptureState::Result::InvalidTarget) return c;
         if (r == Shader::Ampere::ProgramCaptureState::Result::Complete) break;
     }
-    {   // (hylia, for bisecting a bad translation) RX_VK_REJECT_STAGES=<n,...> (NVN stages) and RX_VK_REJECT_KEYS=
+    {   // (ocarune, for bisecting a bad translation) RX_VK_REJECT_STAGES=<n,...> (NVN stages) and RX_VK_REJECT_KEYS=
         // <hex prefix,...>: those programs are taken as untranslatable, as a lowering failure leaves them
         static const std::string stages = getenv("RX_VK_REJECT_STAGES") ? getenv("RX_VK_REJECT_STAGES") : "";
         // (none by default: OoT's mesh program 32423793502c71e7 stayed out while it lost the device; it no longer does)
@@ -213,7 +213,7 @@ Code parse_code(const uint8_t* ctl, const std::vector<uint8_t>& area) {
         if (reject) return c;
     }
     // (compute only: the host's cooperative matrices are, vk_coopmat.cpp)
-    // (hylia) and only for the programs in RX_VK_NATIVE_MMA_KEYS (key prefixes, default the gameplay TAAU network,
+    // (ocarune) and only for the programs in RX_VK_NATIVE_MMA_KEYS (key prefixes, default the gameplay TAAU network,
     // whose output vk_draw.cpp's stand-in replaces; "all": every one). The others take the exact expansion: with the
     // cooperative matrices the movie upscaler lost its blue (the title's clip yellow) though the device's fragment
     // layout passes vk_coopmat.cpp's multiply; exact, its colours are right at the same frame rate
@@ -233,13 +233,13 @@ Code parse_code(const uint8_t* ctl, const std::vector<uint8_t>& area) {
     }
     Shader::Ampere::native_matrix_multiply = dev.native_mma && !graphics && native_key;
     const auto lowered = Shader::Ampere::LowerToMaxwell(native);
-    if (lowered && lowered.register_map_words) {   // (hylia) which programs run with extended registers
+    if (lowered && lowered.register_map_words) {   // (ocarune) which programs run with extended registers
         static std::atomic<int> logged{0};
         if (logged++ < 64)
             logf("vk: NVN2 program %016llx (stage %u) lowered with extended registers (%u REGMAP words)",
                  (unsigned long long)c.key, st, lowered.register_map_words);
     }
-    if (const char* want = getenv("RX_VK_DUMP_NATIVE")) {   // (hylia) <key prefix,...>: native code of those programs
+    if (const char* want = getenv("RX_VK_DUMP_NATIVE")) {   // (ocarune) <key prefix,...>: native code of those programs
         char hex[24];
         snprintf(hex, sizeof hex, "%016llx", (unsigned long long)c.key);
         for (const char* q = want; *q;) {
@@ -256,7 +256,7 @@ Code parse_code(const uint8_t* ctl, const std::vector<uint8_t>& area) {
             q = *e ? e + 1 : e;
         }
     }
-    if (!lowered) {   // (hylia: each program once, up to 400, with the native opcode it stopped at)
+    if (!lowered) {   // (ocarune: each program once, up to 400, with the native opcode it stopped at)
         static std::mutex mu;
         static std::unordered_set<uint64_t> seen;
         std::lock_guard lk(mu);
@@ -339,7 +339,7 @@ bool handle_is_integer(uint32_t handle) {
     }
 }
 
-// (hylia) A compute program's texture variants (seed_compute): translated with nothing bound, every texture question of a compute program
+// (ocarune) A compute program's texture variants (seed_compute): translated with nothing bound, every texture question of a compute program
 // is asked of handle 0, and which slot asks is not known. Under `forced`, c0's texture and image handles read as tokens of their
 // slots, each question is noted once by its handle, and the answer wanted for it is given in place of an unbound slot's
 struct Forced {
@@ -417,7 +417,7 @@ public:
     }
     u32 SharedMemorySize() const override {
         // (what the program declares, from the control section: 48 KB for every one was past an RX 9070 XT's 32 KB, and its
-        // pipelines were invalid. klimovich008, Hylia PR 91. RX_VK_SHARED_48K=1: as before)
+        // pipelines were invalid. klimovich008, Ocarune PR 91. RX_VK_SHARED_48K=1: as before)
         static const bool old = getenv("RX_VK_SHARED_48K") != nullptr;
         return old ? 48u << 10 : nvn.shared_memory;
     }
@@ -614,7 +614,7 @@ uint32_t descriptor_handle(const NvnState& s, const Stage& st, const Shader::Tex
                                     << d.secondary_shift_left;
     return h;
 }
-/// (hylia) a storage image descriptor's handle word (its handle program's, read from a storage buffer)
+/// (ocarune) a storage image descriptor's handle word (its handle program's, read from a storage buffer)
 uint32_t descriptor_handle(const NvnState& s, const Stage& st, const Shader::ImageDescriptor& d) {
     if (d.handle_program != ~0U) return stage_handle(s, st, d.handle_program);
     return driver_bank_word(s, (int)d.cbuf_index, st.nvn_stage, d.cbuf_offset);
@@ -631,7 +631,7 @@ uint8_t texture_answer(uint32_t handle) {
     return a;
 }
 /// What the bound textures answer now, for a program whose translation asked about them
-// (hylia) storage images too: whether the bound image's format is integer is baked into the translation (Eden's
+// (ocarune) storage images too: whether the bound image's format is integer is baked into the translation (Eden's
 // is_integer, the SPIR-V image's sampled type). OoT writes R11G11B10 and RGBA8 targets through R32UI views of them,
 // packing the bits itself; a variant translated while that slot held a float texture wrote the packed words as
 // floats, which the R32UI view converted: the scene went NaN and yellow before the TAAU
@@ -786,7 +786,7 @@ void dump_ir(const Program& p, const char* stage, const Shader::IR::Program& pro
     if (!want) return;
     char key[24], alt[24];
     snprintf(key, sizeof key, "%016llx", (unsigned long long)p.key);
-    snprintf(alt, sizeof alt, "%016llx", (unsigned long long)code_key);   // (hylia: or the stage code's own key)
+    snprintf(alt, sizeof alt, "%016llx", (unsigned long long)code_key);   // (ocarune: or the stage code's own key)
     bool match = false;
     for (const char* q = want; *q;) {
         const char* e = q;
@@ -806,7 +806,7 @@ void dump_ir(const Program& p, const char* stage, const Shader::IR::Program& pro
 }
 
 /// Translates a program variant's stages into p (on a worker for graphics programs: s and the codes are copies)
-// (hylia) ir_opt/oot_visual_workaround.h, on the game's programs
+// (ocarune) ir_opt/oot_visual_workaround.h, on the game's programs
 void oot_visual(Shader::IR::Program& program, uint64_t key) {
     // (EvilOOT, 11-07: off unless RX_VK_OOT_VISUAL=1. With the foliage culling, the pointer reads and the first GPU work right, the
     // game's own fog is the soft haze with sun shafts of the console's picture at Kokiri's rock; the 0.08 factor was tuned against
@@ -822,10 +822,10 @@ void oot_visual(Shader::IR::Program& program, uint64_t key) {
              (unsigned long long)key, n);
 }
 
-// ---- (hylia) The program cache, oot_programs.bin beside the executable: what translation made, by the key of the
+// ---- (ocarune) The program cache, oot_programs.bin beside the executable: what translation made, by the key of the
 // stages' code and inputs. A program met for the first time stopped the frame for its translation, 9 s of it each run,
 // the long stutters when walking somewhere (replay workers in jobs_wait for up to 150 ms). The pipelines themselves were
-// already kept (mkw_vk_pipelines.bin). Written as made; good for this translator (HYLIA_SHADER_STAMP) and these switches only
+// already kept (mkw_vk_pipelines.bin). Written as made; good for this translator (OCARUNE_SHADER_STAMP) and these switches only
 // (a file made by another starts again). RX_VK_NO_PROGRAM_CACHE=1: off ----
 struct DiskRecord { int64_t at; size_t size; uint32_t kind; };
 std::mutex disk_mu;
@@ -873,7 +873,7 @@ uint64_t disk_stamp() {
     };
     // (what translates shaders, nx2/build.py: a rebuild of anything else keeps the cache. It was the DLL's bytes, and every build
     // lost it)
-    const uint64_t translator = HYLIA_SHADER_STAMP;
+    const uint64_t translator = OCARUNE_SHADER_STAMP;
     add(&translator, sizeof translator);
     const uint32_t depth = host->depth_minus_w() != 0;   // (d3zessete's PR 54: programs made in either depth mode are kept apart)
     add(&depth, sizeof depth);
@@ -906,14 +906,14 @@ void disk_init() {
         const DWORD n = game_module_path(exe, MAX_PATH);
         std::string path(exe, n);
         path = path.substr(0, path.find_last_of("\\/") + 1) + "oot_programs.bin";
-        // (one Hylia at a time on a cache: a second one, started while the first wrote, took the record being written for one
+        // (one Ocarune at a time on a cache: a second one, started while the first wrote, took the record being written for one
         // cut short and cut the file there, under the first, whose list of records then named bytes written over since. Held
         // until the process ends)
         {
             uint64_t h = 0xCBF29CE484222325ull;
             for (const char ch : path) h = (h ^ (uint8_t)tolower((unsigned char)ch)) * 1099511628211ull;
             char name[64];
-            snprintf(name, sizeof name, "Local\\HyliaProgramCache_%016llx", (unsigned long long)h);
+            snprintf(name, sizeof name, "Local\\OcaruneProgramCache_%016llx", (unsigned long long)h);
 #ifdef _WIN32
             const HANDLE held = CreateMutexA(nullptr, FALSE, name);
             const bool taken = !held || GetLastError() == ERROR_ALREADY_EXISTS;
@@ -1299,8 +1299,8 @@ void translate_into(Program& p, const NvnState& s, const Code* vsc, const Code* 
                 logf("vk: compute %016llx: workgroup %ux%ux%u, shared memory %u bytes, local memory %u", (unsigned long long)p.key,
                      t->program.workgroup_size[0], t->program.workgroup_size[1], t->program.workgroup_size[2],
                      t->program.shared_memory_size, t->program.local_memory_size);
-            // (hylia) The movie upscaler's dozen networks, on a card that cannot run them as the console does: their software matrix multiplies
-            // took minutes each for AMD's compiler (the black screen with sound, Hylia issue 26: JaredEzz's analysis) and the movies ran at 10 fps
+            // (ocarune) The movie upscaler's dozen networks, on a card that cannot run them as the console does: their software matrix multiplies
+            // took minutes each for AMD's compiler (the black screen with sound, Ocarune issue 26: JaredEzz's analysis) and the movies ran at 10 fps
             // (issues 38, 43). Left out, the last pass becomes a linear upscale of the movie (upscale_stub in vk_draw.cpp): the same picture at 60
             // fps, a little softer. The gameplay TAAU network stays. RX_VK_NETWORK_KEEP=<key prefixes>, "all": every one runs
             if (t->program.info.uses_cooperative_matrix) {
@@ -1439,7 +1439,7 @@ std::array<u32, 3> mesh_registers_of(const Code* task, const Code& mesh) {
     // (the control section's topology in GL's numbers: 3 triangles; 1 points, not lines. OoT's four mesh programs with a 1 (the grass
     // drawn into the 2400 x 2400 shadow map around Link) write one index byte per primitive, the primitive count = their vertex
     // count, and a point size. Read as lines, each joined vertex 2i to 2i + 1 of its meshlet: a mesh of long thin dark stripes on
-    // the ground, the water and Link around him, on AMD; Hylia issue 302)
+    // the ground, the water and Link around him, on AMD; Ocarune issue 302)
     const uint32_t topology = mesh.topology == 3 ? 4 : mesh.topology == 1 ? 0 : mesh.topology;
     const uint32_t lines = task ? (task->payload_bytes + 127) / 128 : 0;
     // (the larger of the two for both: the control section's pair is not always vertices and primitives in that order. The door's
@@ -1715,7 +1715,7 @@ void answer_handles(const NvnState& s, const Program& p, std::vector<uint32_t>& 
 }
 } // namespace
 
-/// (hylia) the bound program's stages and code keys, as "stage:key" words (RX_VK_SKIP_PROG's log)
+/// (ocarune) the bound program's stages and code keys, as "stage:key" words (RX_VK_SKIP_PROG's log)
 /// (for logs) what the program's textures resolve to now
 std::string program_textures(const NvnState& s, const Program& p) {
     std::string out;
@@ -1748,7 +1748,7 @@ std::string program_code_keys(const NvnState& s) {
     return out;
 }
 
-/// (hylia) the bound compute program's code key (0: none): what "does not lower" names, for a rejected dispatch
+/// (ocarune) the bound compute program's code key (0: none): what "does not lower" names, for a rejected dispatch
 uint64_t compute_code_key(const NvnState& s) {
     if (!s.has_prog) return 0;
     for (const Code& c : codes_of(s))
@@ -1774,7 +1774,7 @@ uint64_t prog_stage_sig(const nvn_prog& p) {
     for (int i = 0; i < 6; i++) h = h * 1099511628211ull ^ p.sd[i].data ^ (p.sd[i].control << 1);
     return h ^ p.serial;
 }
-// (hylia) The stages whose bindings a graphics program's answers are read from, one bit a stage, when each answer is a handle in c2 of the
+// (ocarune) The stages whose bindings a graphics program's answers are read from, one bit a stage, when each answer is a handle in c2 of the
 // stage itself (a handle program reads uniform memory, another bank other state): then the pick stands while those stages' textures,
 // samplers and images do (NvnState::tex_gen), whatever else was bound. ~0: not so, the pick stands while nothing at all was bound anew
 uint32_t answer_stage_mask(const Program& p) {
@@ -1818,7 +1818,7 @@ const Program* program_for(const NvnState& s, ProgramKind kind, const uint8_t co
              (long long)st_hit, (long long)st_by_tex, (long long)st_none, (long long)st_differ, (long long)st_calls);
     const uint64_t stages = prog_stage_sig(s.prog);
     const uint64_t bind = s.bind_gen, reg = registrations_generation(), ub = ub_generation();
-    // (hylia) the pair of the last picks stood only while nothing at all was bound anew, and OoT binds a uniform buffer for nearly every
+    // (ocarune) the pair of the last picks stood only while nothing at all was bound anew, and OoT binds a uniform buffer for nearly every
     // draw: a draw of the same program with the same textures found its program through the full pick (the key, the answers' handles, a
     // compare). It stands now while the textures its answers are read from do (answer_stage_mask). RX_VK_PICK_BIND_GEN=1: as before
     static const bool by_bind = getenv("RX_VK_PICK_BIND_GEN") != nullptr;
@@ -1976,7 +1976,7 @@ size_t program_cache_load_some(const std::unordered_set<uint64_t>& wanted, const
     return n;
 }
 
-/// (hylia) Program key's kept variants made for fn, then let go (modules and layouts): the records stay for play
+/// (ocarune) Program key's kept variants made for fn, then let go (modules and layouts): the records stay for play
 void program_cache_borrow(uint64_t key, const std::function<void(Program&)>& fn) {
     std::vector<std::unique_ptr<Program>> variants;
     program_cache_load(key, variants, true);
@@ -1989,7 +1989,7 @@ void program_cache_borrow(uint64_t key, const std::function<void(Program&)>& fn)
     }
 }
 
-/// (hylia, the prediction: vk_predict.cpp) every kept graphics program variant, read without making its modules
+/// (ocarune, the prediction: vk_predict.cpp) every kept graphics program variant, read without making its modules
 void program_cache_each(const std::function<void(const KeptProgram&)>& fn) {
     disk_init();
     if (!disk_on) return;
@@ -2032,7 +2032,7 @@ void program_cache_each(const std::function<void(const KeptProgram&)>& fn) {
     }
 }
 
-// ---- (hylia) Every shader of the game before it starts, as TotK Recomp's tools/prepare_shaders.py and totk.exe --prepare-shaders: the
+// ---- (ocarune) Every shader of the game before it starts, as TotK Recomp's tools/prepare_shaders.py and totk.exe --prepare-shaders: the
 // builder writes oot_shaders.bin (nx2/shader_census.py) from the archives, each program's stages, and here each is translated
 // for the default state (nothing bound, float inputs and outputs) and kept in oot_programs.bin. What a draw then asks for is on
 // disk, whatever part of the game it is first met in ----
@@ -2179,7 +2179,7 @@ bool seed_is_compute(size_t i) {
     return false;
 }
 
-// (hylia) The seed's compute programs, each with its texture variants. A program's texture questions are answered in play by the
+// (ocarune) The seed's compute programs, each with its texture variants. A program's texture questions are answered in play by the
 // textures bound (Program::answers), which nothing before the game knows; the questions themselves are few, so each is tried with every
 // answer it can get, and an answer that changes the SPIR-V makes a variant. Variants of two answers and more are taken fewest first, up
 // to cap: one of them is the variant play makes, which still_valid then finds kept. All go to oot_programs.bin, as play keeps them,

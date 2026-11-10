@@ -52,9 +52,9 @@ def main():
     for name, a, b in zip(("stats", "unhandled", "ijump", "polls"), one[1:], many[1:]):
         if dict(a) != dict(b):
             raise SystemExit("the parallel emit's %s differ: %s vs %s" % (name, dict(a), dict(b)))
-    os.environ["HYLIA_LIFT_JOBS"] = "3"
+    os.environ["OCARUNE_LIFT_JOBS"] = "3"
     if chunks.emit_jobs() != 3:
-        raise SystemExit("HYLIA_LIFT_JOBS is not followed")
+        raise SystemExit("OCARUNE_LIFT_JOBS is not followed")
     print("ok: %d functions, the same texts and counters from 1 and 4 processes" % len(one[0]))
 
 

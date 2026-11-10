@@ -22,11 +22,11 @@ spec.loader.exec_module(make_game)
 
 class ShaderCensusCommandTests(unittest.TestCase):
     def test_the_list_uses_the_utf8_interpreter(self):
-        cmd = make_game.shader_census_cmd("/tmp/romfs", "/tmp/out/hylia_shaders.bin")
+        cmd = make_game.shader_census_cmd("/tmp/romfs", "/tmp/out/ocarune_shaders.bin")
         self.assertEqual(cmd[:5], [sys.executable, "-I", "-u", "-X", "utf8"])
         self.assertTrue(cmd[5].endswith("shader_census.py"))
-        self.assertEqual(cmd[6:], ["/tmp/romfs", "--out", "/tmp/out/hylia_shaders.bin"])
-        old = [sys.executable, "-I", cmd[5], "/tmp/romfs", "--out", "/tmp/out/hylia_shaders.bin"]
+        self.assertEqual(cmd[6:], ["/tmp/romfs", "--out", "/tmp/out/ocarune_shaders.bin"])
+        old = [sys.executable, "-I", cmd[5], "/tmp/romfs", "--out", "/tmp/out/ocarune_shaders.bin"]
         self.assertNotEqual(cmd, old)
 
     def test_that_interpreter_can_print_a_letter_the_page_might_not(self):

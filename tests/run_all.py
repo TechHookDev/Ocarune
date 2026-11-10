@@ -65,7 +65,7 @@ SKIP = {
     # (the game: these run the lifted code of a real dump against Unicorn)
     "nx2/test_insn.py": ({"linux", "windows"}, "needs the game's modules (work/dump) and Unicorn"),
     "nx2/test_leaf.py": ({"linux", "windows"}, "needs the game's modules (work/dump) and Unicorn"),
-    "nx2/test_dll.py": ({"linux", "windows"}, "needs a full game build (work/build/hylia_game.dll) and Unicorn"),
+    "nx2/test_dll.py": ({"linux", "windows"}, "needs a full game build (work/build/ocarune_game.dll) and Unicorn"),
     # (a GPU)
     "nx2/test_bc_storage_views.py": ({"linux", "windows"}, "needs a Windows Vulkan device"),
 }
@@ -98,8 +98,8 @@ def header_dir(env, cpm_name, probe):
 
 def find_tools():
     return {
-        "spirv_headers": header_dir("HYLIA_SPIRV_HEADERS", "spirv-headers", os.path.join("spirv", "unified1", "spirv.h")),
-        "vulkan_headers": header_dir("HYLIA_VULKAN_HEADERS", "vulkanheaders", os.path.join("vulkan", "vulkan.h")),
+        "spirv_headers": header_dir("OCARUNE_SPIRV_HEADERS", "spirv-headers", os.path.join("spirv", "unified1", "spirv.h")),
+        "vulkan_headers": header_dir("OCARUNE_VULKAN_HEADERS", "vulkanheaders", os.path.join("vulkan", "vulkan.h")),
         "spirv_val": which("spirv-val"),
         "cxx": which(os.environ.get("CXX", ""), "clang++", "g++", "c++"),
     }

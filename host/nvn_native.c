@@ -139,7 +139,7 @@ int nvn_gpu_write(uint64_t gpu, const void *src, uint64_t n) {
 /* ---- device ---- */
 static volatile LONG depth_minus_w = 1;   /* (OoT's mode from the start: the shaders prepared before the game made its device were
                                             translated without the depth conversion, and the menu's text and logo fell outside the depth range
-                                            on a first start. d3zessete, Hylia PR 54) */
+                                            on a first start. d3zessete, Ocarune PR 54) */
 int nvn_depth_minus_w(void) { return depth_minus_w != 0; }
 uint64_t nvn_native_proc(const char *name);
 
@@ -155,7 +155,7 @@ NV(nvnDeviceInitialize) {
 }
 NV(nvnDeviceFinalize) { ((nvn_dev *)P(0))->magic = 0; }
 NV(nvnDeviceGetProcAddress) { RET(U64(1) ? nvn_native_proc((const char *)GP(U64(1))) : 0); }
-/* (hylia) API version 231.40: OoT (SDK 22.2.8) skips its graphics setup unless the minor is >= 40 (main
+/* (ocarune) API version 231.40: OoT (SDK 22.2.8) skips its graphics setup unless the minor is >= 40 (main
    0x8348c11c); MKW's driver said 39, which MKW accepts too. */
 /* The Switch 2 NVN2 driver's device limits: its nvnDeviceGetInteger (sdk+0x65b680) run for every id under
    Unicorn with a zeroed device. The few it reads from device state (0 there) keep NVN1's value (TOTKPort). */
@@ -278,7 +278,7 @@ NV(nvnMemoryPoolInitialize) {
     OLOG("pool %#llx size %#llx flags %#x", (unsigned long long)o->gpu, (unsigned long long)o->size, o->flags);
     RET(1);
 }
-/* (hylia) A memory-pool call made with no pool: the game passed 0 while the banc changed (thread
+/* (ocarune) A memory-pool call made with no pool: the game passed 0 while the banc changed (thread
    OptimizeChangeBanc, Kakariko's day/night transition), and flags at +4 of it crashed. 0 then, and who asked, once.
    P(0) returns NULL for a 0 argument, but dereferencing that NULL is undefined behaviour: the compiler folds the
    check away and reads A64_MEM + offset instead, so the guard has to come before the dereference. */
@@ -420,7 +420,7 @@ NV(nvnBufferInitialize) {
     RET(1);
 }
 NV(nvnBufferFinalize) { memset(P(0), 0, sizeof(nvn_buffer)); }
-/* (hylia, issue 287) A buffer with no memory pool, mapped: the game filled 0x3d0 bytes at what it got back, 0, and crashed
+/* (ocarune, issue 287) A buffer with no memory pool, mapped: the game filled 0x3d0 bytes at what it got back, 0, and crashed
    on a scene change (Hyrule Castle / Castle Town / Hyrule Field, Kakariko day to night; thread OptimizeChangeBanc, right after
    "flags of no memory pool"). Zeroed scratch memory in the game's address space instead, as large as the biggest asked for
    (never freed: it comes rarely), and who asked, once. */
@@ -485,7 +485,7 @@ NV(nvnSamplerPoolSetDebugLabel) {}
 NV(nvnSamplerPoolRegisterSampler) { rx_nvn_register_sampler(I(1), &((const nvn_samp *)P(2))->p); }
 
 /* ---- textures ---- */
-/* (hylia) A texture builder of no address: a scratch one instead, said once. The game passed 0 after a long freeze (the
+/* (ocarune) A texture builder of no address: a scratch one instead, said once. The game passed 0 after a long freeze (the
    ocarina note sheet's first build, combat in Hyrule Field) and nvnTextureBuilderSetSwizzle read A64_MEM + 0x5c (issue 500);
    a builder set up wrongly is a missing texture, not a crash. As PR 510 for memory pools. */
 static nvn_tex_builder *tb_or_scratch(void *p, uint64_t lr) {
@@ -519,7 +519,7 @@ NV(nvnTextureBuilderSetSize1D) { nvn_tex_builder *b = TB(P(0)); b->d.width = U32
 NV(nvnTextureBuilderSetSize2D) {
     nvn_tex_builder *b = TB(P(0));
     b->d.width = U32(1), b->d.height = U32(2), b->d.depth = 1;
-    {   /* (hylia) HOS_SIZE_TRACE=1: who asks for the picture's sizes (the output and the scene: for wider screens) */
+    {   /* (ocarune) HOS_SIZE_TRACE=1: who asks for the picture's sizes (the output and the scene: for wider screens) */
         static int on = -1;
         static volatile LONG left = 24;
         if (on < 0) on = getenv("HOS_SIZE_TRACE") != NULL;
@@ -558,7 +558,7 @@ NV(nvnTextureBuilderGetPackagedTextureData) { RET(CTB(P(0))->pkg_data); }
 static int storage_class(const nvn_texdesc *d) { return d->target == NVN_TEXTURE_TARGET_BUFFER ? 0 : 1; }
 NV(nvnTextureBuilderGetStorageClass) { RET(storage_class(&CTB(P(0))->d)); }
 NV(nvnTextureBuilderGetFlags) { RET((uint32_t)CTB(P(0))->d.flags); }
-/* (hylia, issues 284 and 287) A size or alignment asked of no builder: the game passed 0 here while a scene loaded (thread
+/* (ocarune, issues 284 and 287) A size or alignment asked of no builder: the game passed 0 here while a scene loaded (thread
    OptimizeChangeBanc, entering Castle Town), and the format read at +4 of it crashed the game. Size 0 then, and who asked, once */
 static int no_builder(Ctx *c, const char *what) {
     if (c->x[0]) return 0;
@@ -1012,7 +1012,7 @@ static uint64_t held_count(void) { return (uint64_t)nheld; }
 NV(nvnQueueFenceSync) {
     held_init();
     nvn_sync *s = (nvn_sync *)P(1); s->fenced = 1;
-    /* (hylia) the queue's own work: with nothing held, its last submission (a wait for it no longer waits for another
+    /* (ocarune) the queue's own work: with nothing held, its last submission (a wait for it no longer waits for another
        queue's work stopped at an event wait) */
     s->fence = held_count() ? rx_nvn_fence() + held_count() : rx_nvn_fence_q((uint64_t)(uintptr_t)P(0));
     if (sync_log()) hos_log("nvn: FenceSync %p -> %llu (lr %#llx)", (void *)s, (unsigned long long)s->fence, (unsigned long long)c->x[30]);
@@ -1062,7 +1062,7 @@ NV(nvnEventInitialize) {
     RET(1);
 }
 NV(nvnEventFinalize) { ((nvn_event *)P(0))->magic = 0; }
-/* (hylia) an NVN event's value from the host (hos_thread.c's present poll): 0 when it is no event */
+/* (ocarune) an NVN event's value from the host (hos_thread.c's present poll): 0 when it is no event */
 int hos_nvn_event_value(uint64_t guest_event, uint32_t *v) {
     const nvn_event *e = (const nvn_event *)GP(guest_event);
     if (!guest_event || e->magic != NVN_MAGIC('E', 'V', 'N', 'T')) return 0;
@@ -1071,7 +1071,7 @@ int hos_nvn_event_value(uint64_t guest_event, uint32_t *v) {
     return 1;
 }
 NV(nvnEventGetValue) {
-    {   /* (hylia, experiment) HOS_PRESENT_NOWAIT=1: OoT's present poll (hos_thread.c present_poll) sees its frame's
+    {   /* (ocarune, experiment) HOS_PRESENT_NOWAIT=1: OoT's present poll (hos_thread.c present_poll) sees its frame's
            event signalled at once: the replay reads memory as submitted, so the game may go on to the next frame
            while this one is replayed, as far as the window's textures and the replay's queue let it */
         static int nowait = -1;
@@ -1545,7 +1545,7 @@ NV(nvnCommandBufferWaitSync) {
     const LONG k = InterlockedIncrement(&n);
     if (k <= 40 || k % 5000 == 0) hos_log("nvn: CommandBufferWaitSync #%ld (lr %#llx)", (long)k, (unsigned long long)c->x[30]);
 }
-/* (hylia) nvnCommandBufferPushComputeConstants(cmdbuf, int ?, offset, size, const void* data): compute push
+/* (ocarune) nvnCommandBufferPushComputeConstants(cmdbuf, int ?, offset, size, const void* data): compute push
    constants, which NVN2 compute programs read from their driver bank (c0) after the workgroup counts. OoT pushes a
    colour matrix (0x40 bytes) for the shader that turns its movie's NV12 planes into RGBA. Copied at record time, as
    UpdateUniformBuffer; the replay keeps them in the compute state (vk_bank.cpp serves them). */
@@ -1560,7 +1560,7 @@ NV(nvnCommandBufferPushComputeConstants) {
     memcpy(p + 8, &u, sizeof u);
     memcpy(p + 8 + sizeof u, P(4), n);
 }
-/* (hylia) nvnQueueWaitSync(queue, sync): the queue's later work waits on the GPU for the sync's fence. Every
+/* (ocarune) nvnQueueWaitSync(queue, sync): the queue's later work waits on the GPU for the sync's fence. Every
    NVN queue replays in one stream in submit order, so a fence submitted before this already came first; a sync not
    fenced yet (a wait on a fence another queue submits later) cannot be honored that way and is logged. */
 NV(nvnQueueWaitSync) {
@@ -1596,7 +1596,7 @@ NV(nvnCommandBufferReportCounter) {
         r->type |= NVN_COUNTER_WRITTEN;
     }
 }
-/* (hylia) nvnCommandBufferClearBuffer(cmdbuf, BufferAddress dst, size_t size, uint32_t value): OoT's gameplay
+/* (ocarune) nvnCommandBufferClearBuffer(cmdbuf, BufferAddress dst, size_t size, uint32_t value): OoT's gameplay
    clears small GPU buffers (counters, 8 bytes) with it */
 NV(nvnCommandBufferClearBuffer) {
     nvn_p_clear_buf *r = REC(CB(P(0)), NOP_CLEAR_BUF, nvn_p_clear_buf);
@@ -1972,7 +1972,7 @@ NV(nvnCommandBufferCopyBufferToTexture) {
     set_view(&r->view, &r->has_view, U64(3));
     r->r = *(const NVNcopyRegion *)P(4);
     r->flags = I(5);
-    {   /* (hylia, RX_VK_LOG_B2T=1) who records the big copies: the caller's chain, each new source once */
+    {   /* (ocarune, RX_VK_LOG_B2T=1) who records the big copies: the caller's chain, each new source once */
         static int on = -1;
         if (on < 0) on = getenv("RX_VK_LOG_B2T") != NULL;
         static uint64_t seen[16];
@@ -2017,7 +2017,7 @@ static void clear_tex(Ctx *c, int is_uint) {
 NV(nvnCommandBufferClearTexture) { clear_tex(c, 0); }
 NV(nvnCommandBufferClearTextureui) { clear_tex(c, 1); }
 NV(nvnCommandBufferSetCopyRowStride) { REC(CB(P(0)), NOP_COPY_STRIDE, nvn_p_copy_stride)->stride = (int64_t)U64(1); }
-/* (hylia) the buffer stride between layers of a 3D / array copy; OoT sets 0 (tightly packed, the default the
+/* (ocarune) the buffer stride between layers of a 3D / array copy; OoT sets 0 (tightly packed, the default the
    replay assumes). A real stride is logged: the replay would need it. */
 NV(nvnCommandBufferSetCopyImageStride) {
     static int once;

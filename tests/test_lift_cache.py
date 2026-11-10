@@ -20,7 +20,7 @@ def check(what, ok):
 
 
 def main():
-    with tempfile.TemporaryDirectory(prefix="hylia-lift-key-") as d:
+    with tempfile.TemporaryDirectory(prefix="ocarune-lift-key-") as d:
         d = Path(d)
         exefs, work = d / "exefs", d / "work"
         (exefs).mkdir()

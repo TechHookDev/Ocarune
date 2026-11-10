@@ -16,8 +16,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef HYLIA_VERSION   /* (nx2/build.py gives it: the release and a fingerprint of the sources, nx2/version.py) */
-#define HYLIA_VERSION "unknown"
+#ifndef OCARUNE_VERSION   /* (nx2/build.py gives it: the release and a fingerprint of the sources, nx2/version.py) */
+#define OCARUNE_VERSION "unknown"
 #endif
 #if defined(_WIN32) || defined(__EMSCRIPTEN__)
 #define WIN32_LEAN_AND_MEAN
@@ -171,7 +171,7 @@ static int reserve_guest(void) {
                         u < 0 ? "/dev/udmabuf cannot be opened" : "udmabuf's size_limit_mb cannot be read");
         }
         if (e ? atoi(e) != 0 : usable) {
-            const int fd = (int)syscall(SYS_memfd_create, "hylia-guest", 1u /* MFD_CLOEXEC */ | 2u /* MFD_ALLOW_SEALING */);
+            const int fd = (int)syscall(SYS_memfd_create, "ocarune-guest", 1u /* MFD_CLOEXEC */ | 2u /* MFD_ALLOW_SEALING */);
             if (fd >= 0 && ftruncate(fd, (off_t)GUEST_SPACE) == 0) {
                 fcntl(fd, 1033 /* F_ADD_SEALS */, 0x0002 /* F_SEAL_SHRINK */ | 0x0004 /* F_SEAL_GROW */);
                 void *p = mmap((void *)A64_HOST_BASE, GUEST_SPACE, PROT_READ | PROT_WRITE,
@@ -235,7 +235,7 @@ static void call_guest(Ctx *c, uint64_t addr, uint64_t sp, const char *what) {
 }
 
 #ifndef _WIN32
-/* (linux) Saves live in $XDG_DATA_HOME/hylia (~/.local/share/hylia), so a rebuilt game folder still finds them.
+/* (linux) Saves live in $XDG_DATA_HOME/ocarune (~/.local/share/ocarune), so a rebuilt game folder still finds them.
    A user/ folder beside the executable from before is moved there the first time, entry by entry. Anything that
    cannot be moved keeps the old place. --user still wins. */
 static int is_dir(const char *p) {
@@ -301,7 +301,7 @@ static const char *saves_dir(const char *beside) {
         snprintf(dir, sizeof dir, "%s/.local/share", home);
     } else return beside;
     CreateDirectoryA(dir, NULL);
-    snprintf(dir + strlen(dir), sizeof dir - strlen(dir), "/hylia");
+    snprintf(dir + strlen(dir), sizeof dir - strlen(dir), "/ocarune");
     CreateDirectoryA(dir, NULL);
     if (GetFileAttributesA(dir) == INVALID_FILE_ATTRIBUTES) return beside;
     char pattern[MAX_PATH];
@@ -581,7 +581,7 @@ static const OotDestination oot_destinations[] = {   /* (generated: work/oot-tel
     {"SacredForestMeadow_Child", "OutsideOfForestTemple", "Dm_SY_BancChangeArrive_SacredForestMeadow_01",
      "SacredForestMeadow_Adult", "OutsideOfForestTemple", "Dm_SY_BancChangeArrive_SacredForestMeadow_01"},   /* Sacred Forest Meadow */
     {"HyruleField_Child", "LakeHylia_FromGerudoValley", "Dm_SY_BancChangeArrive_LakeHylia_02",
-     "HyruleField_Adult", "LakeHylia_FromGerudoValley", "Dm_SY_BancChangeArrive_LakeHylia_02"},   /* Lake Hylia */
+     "HyruleField_Adult", "LakeHylia_FromGerudoValley", "Dm_SY_BancChangeArrive_LakeHylia_02"},   /* Lake Ocarune */
     {"Graveyard_Child", "GraveYard_KakarikoSide", "Dm_SY_BancChangeArrive_Graveyard_01",
      "Graveyard_Adult", "GraveYard_KakarikoSide", "Dm_SY_BancChangeArrive_Graveyard_01"},   /* Graveyard */
     {"DeathMountainTrail_Child", "MountainTrail_KakarikoSide", "Dm_SY_BancChangeArrive_DeathMountainTrail_01",
@@ -1157,15 +1157,15 @@ volatile uint64_t hos_wide_out, hos_wide_scene;
 volatile int hos_native_scene;
 volatile int hos_fix_res;   /* (nx2/oot_native_resolution.py's cached-scale refresh: HOS_FIX_RES=1; #849's fixed-scale patch does it by default) */
 volatile float hos_wide_ratio, hos_wide_squeeze, hos_wide_margin;
-/* (nx2/oot_occlusion.py) read by the game's code where it decides to make occlusion queries: 1, none (HYLIA_OCCLUSION_OFF=1) */
+/* (nx2/oot_occlusion.py) read by the game's code where it decides to make occlusion queries: 1, none (OCARUNE_OCCLUSION_OFF=1) */
 volatile int hos_occlusion_off;
 static void occlusion_switch(void) {
-    const char *e = getenv("HYLIA_OCCLUSION_OFF");
+    const char *e = getenv("OCARUNE_OCCLUSION_OFF");
     hos_occlusion_off = e && e[0] == '1';
-    if (hos_occlusion_off) hos_log("occlusion off: the game makes no occlusion queries (HYLIA_OCCLUSION_OFF=1)");
+    if (hos_occlusion_off) hos_log("occlusion off: the game makes no occlusion queries (OCARUNE_OCCLUSION_OFF=1)");
 }
 #ifdef _WIN32
-/* (hylia) On laptops with two GPUs, the drivers run a program on the dedicated one when it exports these (NVIDIA Optimus, AMD
+/* (ocarune) On laptops with two GPUs, the drivers run a program on the dedicated one when it exports these (NVIDIA Optimus, AMD
    PowerXpress): without them a laptop could put the game on its integrated GPU, 5 fps (issue 176) */
 __declspec(dllexport) unsigned long NvOptimusEnablement = 1;
 __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
@@ -1182,7 +1182,7 @@ static int game_main(int argc, char **argv) {
     const char *protect_hearts = getenv("HOS_OOT_PROTECT_HEARTS");
     hos_oot_protect_hearts = protect_hearts && !strcmp(protect_hearts, "1");
     {   // (the whole process, not only the window's thread: the renderer asks the window's size from its own, and on a 4K screen at 150%
-        // Windows answered such a thread 2560 x 1440: the picture was that size, in the corner of the window. Hylia issues 15, 18, 20)
+        // Windows answered such a thread 2560 x 1440: the picture was that size, in the corner of the window. Ocarune issues 15, 18, 20)
         typedef BOOL(WINAPI * SetAware)(void *);
         SetAware set = (SetAware)(void *)GetProcAddress(GetModuleHandleA("user32.dll"), "SetProcessDpiAwarenessContext");
         if (set && !getenv("HOS_DPI_UNAWARE")) set((void *)(intptr_t)-4);
@@ -1207,17 +1207,17 @@ static int game_main(int argc, char **argv) {
             if (freopen(path, "w", stderr)) setvbuf(stderr, NULL, _IONBF, 0);
         }
     }
-    hos_log("Ocarina of Time %s", HYLIA_VERSION);   /* (the log's first line: which build a report comes from) */
+    hos_log("Ocarina of Time %s", OCARUNE_VERSION);   /* (the log's first line: which build a report comes from) */
     const char *image = NULL;
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--romfs") && i + 1 < argc) hos_romfs_dir = argv[++i];
         else if (!strcmp(argv[i], "--user") && i + 1 < argc) hos_user_dir = argv[++i];
         else if (!strcmp(argv[i], "--trace")) hos_trace = 1;
-        else if (!strcmp(argv[i], "--prepare-shaders")) {   /* (hylia) a build's last step: no game */
+        else if (!strcmp(argv[i], "--prepare-shaders")) {   /* (ocarune) a build's last step: no game */
 #ifdef _WIN32
-            _putenv("HYLIA_PREPARE_ONLY=1");
+            _putenv("OCARUNE_PREPARE_ONLY=1");
 #else
-            setenv("HYLIA_PREPARE_ONLY", "1", 1);
+            setenv("OCARUNE_PREPARE_ONLY", "1", 1);
 #endif
             int rx_prepare_shaders(void);
             if (rx_prepare_shaders()) {
@@ -1230,7 +1230,7 @@ static int game_main(int argc, char **argv) {
         else if (!image) image = argv[i];
     }
     static char beside_image[MAX_PATH], beside_romfs[MAX_PATH], beside_user[MAX_PATH];
-    if (!image) {   /* (hylia) started with nothing, as a game is: everything beside the executable (the builder's folder) */
+    if (!image) {   /* (ocarune) started with nothing, as a game is: everything beside the executable (the builder's folder) */
         char dir[MAX_PATH];
         const DWORD len = hos_game_path_a(dir, MAX_PATH);
         char *slash = len ? strrchr(dir, SEP) : NULL;
@@ -1294,7 +1294,7 @@ static int game_main(int argc, char **argv) {
         return 1;
     }
     hos_mem_init(hos_image_end);
-    {   /* (hylia) Widescreen and ultrawide (nx2/oot_wide.py): HOS_ASPECT=<ratio> (2.3889 for 3440x1440), else the Insert menu's
+    {   /* (ocarune) Widescreen and ultrawide (nx2/oot_wide.py): HOS_ASPECT=<ratio> (2.3889 for 3440x1440), else the Insert menu's
            Ultrawide (off unless it says 1) takes the main monitor's shape. The game's picture takes that shape at its own height (Hor+:
            the world wider at the sides), its 16:9 cameras the picture's ratio, the HUD, menus and movies the middle 16:9. Until now the
            one 16:9 constant in the game's data was changed and the 16:9 picture stretched to the window. */

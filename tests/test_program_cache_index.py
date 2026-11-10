@@ -1,6 +1,6 @@
-"""The program cache's index (hylia_programs.idx) and the precompile's parallel reads (gpu/vk/vk_shader.cpp).
+"""The program cache's index (ocarune_programs.idx) and the precompile's parallel reads (gpu/vk/vk_shader.cpp).
 
-The index names each record of hylia_programs.bin (key, size, kind) in the file's order, so a start no longer reads every
+The index names each record of ocarune_programs.bin (key, size, kind) in the file's order, so a start no longer reads every
 record's head across the whole file. These checks read the source: the index is written after its record, never before; it is
 taken only when its stamp, its sizes and the last record's head in the file agree with it, and what lies past it is read as
 before; a record's head is checked against the index when it is loaded; the precompile reads its records on threads of their

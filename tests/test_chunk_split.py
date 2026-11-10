@@ -30,7 +30,7 @@ def check(what, ok):
 
 def main():
     budget = 200000
-    with tempfile.TemporaryDirectory(prefix="hylia-chunk-split-") as d:
+    with tempfile.TemporaryDirectory(prefix="ocarune-chunk-split-") as d:
         small = [function(0x80000000 + 16 * i, 2000) for i in range(60)]
         big = [function(0x81000000 + 16 * i, 2000) for i in range(40)] + [function(0x81100000, 300000)] + \
               [function(0x81200000 + 16 * i, 2000) for i in range(200)]

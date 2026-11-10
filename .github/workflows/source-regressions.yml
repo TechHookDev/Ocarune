@@ -92,8 +92,8 @@ jobs:
       - name: Every test
         if: ${{ !cancelled() }}
         env:
-          HYLIA_SPIRV_HEADERS: ${{ github.workspace }}/_deps/spirv-headers/include
-          HYLIA_VULKAN_HEADERS: ${{ github.workspace }}/_deps/vulkan-headers/include
+          OCARUNE_SPIRV_HEADERS: ${{ github.workspace }}/_deps/spirv-headers/include
+          OCARUNE_VULKAN_HEADERS: ${{ github.workspace }}/_deps/vulkan-headers/include
         run: python -I -B tests/run_all.py --strict
 
   spirv-global16:

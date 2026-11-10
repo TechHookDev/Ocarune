@@ -99,7 +99,7 @@ static int64_t next_frame_at, window_start, frames_in_window;
 static volatile LONG64 presents;
 int hos_vi_native_interval(Ctx *c, int requested) {
     (void)c;
-    /* (hylia) OoT's frame-rate controller asks for 2, 3 or 4 vsyncs a frame whenever one runs long (480 changes a minute
+    /* (ocarune) OoT's frame-rate controller asks for 2, 3 or 4 vsyncs a frame whenever one runs long (480 changes a minute
        in Kokiri): paced to them, frames snapped to 33, 50 and 67 ms, the stutter, and the frame rate sat far under what the
        PC managed. With game time following the clock (the Insert menu's Real time, realtime_step), a frame is shown as soon
        as it is ready, 60 at most; the game still reads back its own interval. HOS_GAME_INTERVAL=1, or Game speed Per frame:
@@ -111,7 +111,7 @@ int hos_vi_native_interval(Ctx *c, int requested) {
     present_interval = game_interval || !rx_option(0, 1) ? clamped : 1;
     return requested;
 }
-/* (hylia) The window's textures as the console's display queue has them: each present is shown at its display
+/* (ocarune) The window's textures as the console's display queue has them: each present is shown at its display
    time, the later of its present and one interval after the frame shown before it, and a texture is free again once
    the frame presented after it is shown. The acquire of a frame waits for its texture: with `active` textures, the
    texture of the frame `active` back, freed when the frame after that one is shown. With three (OoT) a frame slower
@@ -175,7 +175,7 @@ static void scan_dt(long long presents) {
     fclose(f);
     hos_log("vi: scan %s: %zu floats", name, hits);
 }
-/* (hylia) Game time follows the clock. The engine steps every frame by ratio = 60 / <the graphics module's nominal fps,
+/* (ocarune) Game time follows the clock. The engine steps every frame by ratio = 60 / <the graphics module's nominal fps,
    an int at +0x2c8> (main+0x6e6cc4, f_83b6e300 makes seconds = ratio / 60 and the rest), so at 50 fps the game ran at 83%
    speed: walking the same 8 s at 52 and 33 fps went as far as those rates. Each present writes the rate of the last 5
    display intervals there, the rounding error carried to the next frame so that no time is lost; a step is at most
@@ -235,7 +235,7 @@ static void realtime_step(int64_t now) {
     }
     const uint64_t mod = hos_gfx_module;
     if (!mod) return;
-    {   /* (hylia) The frame limiter (f_8042cd20 sleeps to 1 / +0xfc). The engine's adaptive controller writes +0xfc when
+    {   /* (ocarune) The frame limiter (f_8042cd20 sleeps to 1 / +0xfc). The engine's adaptive controller writes +0xfc when
            variable refresh is on (+0x231, f_804fc0f0), any rate from 40 up. HOS_FPS_TARGET=<fps>: that rate kept, 0: left alone;
            HOS_FPS_LOG=1: what the game asks for, every 300 presents */
         static int target = -1, log_on = -1;

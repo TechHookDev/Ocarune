@@ -50,7 +50,7 @@ static const char *desired_language(void) {
                 if ((unsigned char)p[0] == 0xEF && (unsigned char)p[1] == 0xBB && (unsigned char)p[2] == 0xBF) p += 3;   /* (a BOM: Notepad's UTF-8) */
                 while (*p == ' ' || *p == '\t') p++;
                 if (*p == '#' || *p == '\r' || *p == '\n' || !*p) continue;
-                /* (only a code the game has: a stray line was taken before, and the game stayed in English, Hylia issue 75) */
+                /* (only a code the game has: a stray line was taken before, and the game stayed in English, Ocarune issue 75) */
                 char code[32];
                 snprintf(code, sizeof code, "%s", p);
                 code[strcspn(code, " \t\r\n")] = 0;
@@ -85,7 +85,7 @@ HLE(_ZN2nn2oe18GetDesiredLanguageEv) {
 }
 /* HOS_HANDHELD=1: handheld (the 1080p screen: 1080p output and the game's handheld resolutions) instead of docked
    (MKW docked composes 3840 x 2160) */
-static int ini_option(const char *key, int otherwise) {   /* (hylia: the Insert menu's choice, gpu/vk/vk_menu.cpp) */
+static int ini_option(const char *key, int otherwise) {   /* (ocarune: the Insert menu's choice, gpu/vk/vk_menu.cpp) */
     char path[MAX_PATH];
     const DWORD n = hos_game_path_a(path, MAX_PATH);
     char *slash = n ? (strrchr(path, 92) ? strrchr(path, 92) : strrchr(path, 47)) : NULL;   /* (linux: '/'; the game folder's, not bin\\'s) */
@@ -105,7 +105,7 @@ static int handheld(void) {
     if (v < 0) v = getenv("HOS_HANDHELD") ? atoi(getenv("HOS_HANDHELD")) != 0 : ini_option("handheld_profile", 0) != 0;
     return v;
 }
-/* (hylia) The Insert menu's Output resolution (output_res=, HOS_OUTPUT_RES over it), docked only: 0 the game's 2048 x 1152,
+/* (ocarune) The Insert menu's Output resolution (output_res=, HOS_OUTPUT_RES over it), docked only: 0 the game's 2048 x 1152,
    1 2560 x 1440, 2 3840 x 2160. The game's frame is its display size (2560 x 1440 as shipped; nx2/oot_patches.py
    apply_output_size asks hos_output_size) times its graphics scale (GetCurrentGraphicsScale: 0 x1, 1 x0.8, 2 x0.667). Here it
    saw scale 1 (x0 left at the call before's answer), so 2048 x 1152; 1 and 2 ask for x1 of a 2560 x 1440 or 3840 x 2160 display. */
@@ -119,7 +119,7 @@ static int output_mode(void) {
     return v;
 }
 uint32_t hos_output_size(int height) { return output_mode() == 2 ? (height ? 2160 : 3840) : (height ? 1440 : 2560); }
-/* (hylia) The render targets' GPU pool (nx2/oot_patches.py), 0x13100000 bytes as shipped, for 2560 x 1440: a 3840x2160 3D at
+/* (ocarune) The render targets' GPU pool (nx2/oot_patches.py), 0x13100000 bytes as shipped, for 2560 x 1440: a 3840x2160 3D at
    the 4K output ran out of it. Scaled with the output's pixels; HOS_RT_POOL_MB=<MB> over it */
 uint64_t hos_rt_pool_size(uint64_t game) {
     const char *e = getenv("HOS_RT_POOL_MB");
@@ -192,11 +192,11 @@ static uint64_t now_posix(void) {
 HLE(_ZN2nn4time23StandardUserSystemClock14GetCurrentTimeEPNS0_9PosixTimeE) { G64(ARG(0)) = now_posix(); RET(0); }
 HLE(_ZN2nn4time26StandardNetworkSystemClock14GetCurrentTimeEPNS0_9PosixTimeE) { G64(ARG(0)) = now_posix(); RET(0); }
 /* StandardSteadyClock::now() -> time_point (std::chrono, rep int64, period seconds): one register, x0.
-   (hylia) It was a 24-byte SteadyClockTimePoint written through x8; OoT reads x0 and leaves x8 unset (it was 0:
+   (ocarune) It was a 24-byte SteadyClockTimePoint written through x8; OoT reads x0 and leaves x8 unset (it was 0:
    the write faulted at guest 0). MKW does not import it. */
 HLE(_ZN2nn4time19StandardSteadyClock3nowEv) { RET((uint64_t)(hos_now_ns() / 1000000000LL)); }
 
-/* (hylia) nn::socket::detail::Poll(pollfd* fds, unsigned long n, int timeout_ms): offline, no descriptor is ever
+/* (ocarune) nn::socket::detail::Poll(pollfd* fds, unsigned long n, int timeout_ms): offline, no descriptor is ever
    ready. OoT's gRPC poll engine (nn.npln.GrpcDispatcher) calls it through a function pointer, past the socket
    imports the runtime stubs, and the SDK's own Poll aborted on the uninitialized socket layer. It waits out the
    timeout (an infinite one in 50 ms steps, which the poll loop takes as a spurious wake) and reports a timeout. */
@@ -214,7 +214,7 @@ static void socket_poll(Ctx *c) {
 HLE(_ZN2nn6socket6detail4PollEP6pollfdmi) { socket_poll(c); }
 HLE(_ZN2nn6socket6detail4PollEPNS0_6PollFdEmi) { socket_poll(c); }
 
-/* (hylia) nn::account::EnsureNetworkServiceAccountIdTokenCacheAsync(AsyncContext*, UserHandle const&): offline,
+/* (ocarune) nn::account::EnsureNetworkServiceAccountIdTokenCacheAsync(AsyncContext*, UserHandle const&): offline,
    so no network service account. The generic stub's 0 said the task started, and OoT's npln worker (main
    0x8214eac0) then waited on the AsyncContext nothing had set up. This failure (account module 124, description
    280) takes the game's error branch right after the call. */
@@ -222,7 +222,7 @@ HLE(_ZN2nn7account44EnsureNetworkServiceAccountIdTokenCacheAsyncEPNS0_12AsyncCon
     RET(124 | (280 << 9));
 }
 
-/* (hylia) nn::nsd::GetEnvironmentIdentifier(EnvironmentIdentifier* out): char[8]; retail units say "lp1".
+/* (ocarune) nn::nsd::GetEnvironmentIdentifier(EnvironmentIdentifier* out): char[8]; retail units say "lp1".
    OoT (main 0x8243f490) only checks for a "t-" test prefix. Left to the SDK it asks the nsd service over HIPC. */
 HLE(_ZN2nn3nsd24GetEnvironmentIdentifierEPNS0_21EnvironmentIdentifierE) {
     if (ARG(0)) { memset(GP(ARG(0)), 0, 8); memcpy(GP(ARG(0)), "lp1", 3); }
@@ -300,10 +300,10 @@ HLE(_ZN2nn3err9ShowErrorENS_6ResultE) { hos_log("err: the game shows error %#x (
    send it to the prepo service. Reports are dropped. ---------------------------------------------------------- */
 HLE(_ZN2nn5prepo10PlayReport4SaveEv) { RET(0); }
 HLE(_ZN2nn5prepo10PlayReport4SaveERKNS_7account3UidE) { RET(0); }
-/* (hylia) PlayReport::Send(Uid const&), SDK 22's: kept nowhere, as Save. Left to the SDK it opened the prepo
+/* (ocarune) PlayReport::Send(Uid const&), SDK 22's: kept nowhere, as Save. Left to the SDK it opened the prepo
    service through sm: and aborted on the empty reply (OoT's PlayReporter thread, ~5 minutes into a game). */
 HLE(_ZN2nn5prepo10PlayReport4SendERKNS_7account3UidE) { RET(0); }
-/* (hylia) prepo::AsyncContext: the report "sent" at once. GetCompletionEvent(SystemEvent* out) gives an event
+/* (ocarune) prepo::AsyncContext: the report "sent" at once. GetCompletionEvent(SystemEvent* out) gives an event
    already signaled (the SDK's own aborted on the context the empty IPC reply left), GetResult success. */
 void hos_system_event_init(uint64_t key, int autoclear);   /* nn_os_sync.c */
 void hos_system_event_signal(uint64_t key);
@@ -347,7 +347,7 @@ HLE(_ZN2nn7account26GetNetworkServiceAccountIdEPNS0_23NetworkServiceAccountIdERK
 }
 /* nn::oe::GetCurrentGraphicsScale() -> float (docked/handheld render scale): 1.0 */
 HLE(_ZN2nn2oe23GetCurrentGraphicsScaleEv) {
-    /* (hylia) HOS_GRAPHICS_SCALE=<f>: another scale, a test of whether the game sizes its picture by it (4K, issue 68) */
+    /* (ocarune) HOS_GRAPHICS_SCALE=<f>: another scale, a test of whether the game sizes its picture by it (4K, issue 68) */
     static float scale = 0;
     static volatile LONG told;
     if (scale == 0) scale = getenv("HOS_GRAPHICS_SCALE") ? (float)atof(getenv("HOS_GRAPHICS_SCALE")) : 1.0f;

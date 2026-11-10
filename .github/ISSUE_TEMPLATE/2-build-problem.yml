@@ -5,11 +5,11 @@ body:
   - type: markdown
     attributes:
       value: |
-        Before you start: check the [newest release](https://github.com/TechHookDev/Hylia/releases/latest) and the [build requirements](https://github.com/TechHookDev/Hylia#requirements) (Windows 10/11 x64, about 20 GB free), and search the open issues. English, please. Never attach game files.
+        Before you start: check the [newest release](https://github.com/TechHookDev/Ocarune/releases/latest) and the [build requirements](https://github.com/TechHookDev/Ocarune#requirements) (Windows 10/11 x64, about 20 GB free), and search the open issues. English, please. Never attach game files.
   - type: input
     id: version
     attributes:
-      label: Hylia version
+      label: Ocarune version
       description: The release you downloaded (on the Releases page).
       placeholder: v1.0.0
     validations:

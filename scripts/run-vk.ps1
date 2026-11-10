@@ -1,4 +1,4 @@
-# A test run of the standalone build (hylia.exe): the Vulkan back end
+# A test run of the standalone build (ocarune.exe): the Vulkan back end
 # (RX_BACKEND=vulkan), headless unless -Window (then it never takes focus), High priority (-Priority), muted unless
 # -Sound, screenshots every -ShotEvery presents into work\runs\<name>\shots. Extra environment: -Env "A=1;B=2".
 #
@@ -9,7 +9,7 @@ param([int]$Seconds = 120, [string]$Name = "vk", [int]$ShotEvery = 300, [string]
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 if (-not $Force) {
-    $other = Get-Process hylia -ErrorAction SilentlyContinue
+    $other = Get-Process ocarune -ErrorAction SilentlyContinue
     if ($other) { "another game run is going ($(($other | ForEach-Object { "$($_.Name).exe $($_.Id)" }) -join ', ')): one at a time"; exit 2 }
 }
 if (-not $Romfs) {   # (the dump's romfs, from work\dump.txt: nx2/dump.py --set)
@@ -18,7 +18,7 @@ if (-not $Romfs) {   # (the dump's romfs, from work\dump.txt: nx2/dump.py --set)
     $dump = (Get-Content $cfg | Where-Object { $_ -and -not $_.StartsWith("#") } | Select-Object -First 1).Trim()
     $Romfs = Join-Path $dump "romfs"
 }
-$exe = Join-Path $root "work\sa\build\hylia.exe"
+$exe = Join-Path $root "work\sa\build\ocarune.exe"
 $image = Join-Path $root "work\sa\image\image.bin"
 $user = Join-Path $root "work\sa\user"
 $out = Join-Path $root "work\runs\$Name"

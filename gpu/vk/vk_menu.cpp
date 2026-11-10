@@ -1,7 +1,7 @@
 // The Insert menu. Drawn on the CPU (GDI text into a bitmap) and copied over the window's image at the last step of a present,
 // so it costs nothing while closed and it never touches the game's picture, nor what frame interpolation sees. Keys: Insert
 // opens and closes it, Up and Down choose, Left and Right change, Esc closes; the game gets no keyboard input while it is open.
-// (hylia) A gamepad's Home button, or Select and Start together, opens it too; the D-pad chooses and changes, the bottom
+// (ocarune) A gamepad's Home button, or Select and Start together, opens it too; the D-pad chooses and changes, the bottom
 // face button changes too, the right one closes. The game gets no gamepad input while it is open either.
 // Its Controls page binds the Switch's buttons to gamepad inputs and keys.
 #include <atomic>
@@ -16,8 +16,8 @@
 #include "vk_menu.h"
 #include "oot_cheat_items.h"
 #include "vk_work.h"   // (after the others: counts the commands that do GPU work, for full_barrier)
-#ifndef HYLIA_VERSION   // (nx2/build.py gives it to this file: nx2/version.py)
-#define HYLIA_VERSION "unknown"
+#ifndef OCARUNE_VERSION   // (nx2/build.py gives it to this file: nx2/version.py)
+#define OCARUNE_VERSION "unknown"
 #endif
 
 namespace mkwvk {
@@ -241,7 +241,7 @@ Row rows[] = {
      "Inverts vertical look (up/down) on the right analog stick."},
     {TAB_CONTROLS, "Layout preset", &opts.pad_layout, 0, 3, 1, tx_pad_layout,
      "Nintendo (default Switch order), Xbox / PC (A for action/talk), or Swap Face. Individual bindings switch this to Custom."},
-    {TAB_CONTROLS, "Controls", nullptr, 0, 0, 0, nullptr,   // (hylia: opens its page)
+    {TAB_CONTROLS, "Controls", nullptr, 0, 0, 0, nullptr,   // (ocarune: opens its page)
      "Which gamepad button and which keys press each of the Switch's buttons."},
     {TAB_AUDIO, "Master volume", &opts.volume, 0, 100, 5, tx_percent,
      "The game's whole sound level, applied to what reaches your speakers. Takes effect at once."},
@@ -273,7 +273,7 @@ constexpr const char* teleport_names[] = {
     "Hyrule Castle",
     "Lost Woods",
     "Sacred Forest Meadow",
-    "Lake Hylia",
+    "Lake Ocarune",
     "Graveyard",
     "Death Mountain Trail",
     "Death Mountain Crater",
@@ -402,7 +402,7 @@ const char* ini_key(const Row& r) {
     k[n] = 0;
     return k;
 }
-// (hylia) the controls, kept by the host (host/nn_hid.c reads them back from here): pad_<button>, key_<button>
+// (ocarune) the controls, kept by the host (host/nn_hid.c reads them back from here): pad_<button>, key_<button>
 const char* const bind_names[HOS_KEY_N] = {"a", "b", "x", "y", "ls", "rs", "l", "r", "zl", "zr", "plus", "minus",
                                            "left", "up", "right", "down", "move_up", "move_down", "move_left",
                                            "move_right", "cam_up", "cam_down", "cam_left", "cam_right"};
@@ -442,7 +442,7 @@ int detect_pad_layout() {
     return 3;
 }
 void save() {
-    // (hylia) the lines that are not the menu's are kept: the controls, pad_ and key_ (host/nn_hid.c)
+    // (ocarune) the lines that are not the menu's are kept: the controls, pad_ and key_ (host/nn_hid.c)
     std::string kept;
     if (FILE* f = fopen(ini_path().c_str(), "r")) {
         char line[256];
@@ -465,7 +465,7 @@ void save() {
     }
 }
 
-// ---- (hylia) the Controls page: what presses each of the Switch's buttons, a gamepad input and up to two keys ----
+// ---- (ocarune) the Controls page: what presses each of the Switch's buttons, a gamepad input and up to two keys ----
 struct Control {
     int button;   // HOS_SW_*, or HOS_KEY_* (keys only)
     const char* name;
@@ -687,7 +687,7 @@ void paint_menu(HDC dc, uint32_t w, uint32_t h, int s) {
         HFONT small = font(12 * s, FW_NORMAL);
         SelectObject(dc, small);
         SetTextColor(dc, RGB(140, 150, 144));
-        std::string ver = HYLIA_VERSION;
+        std::string ver = OCARUNE_VERSION;
         const int room = (int)w - 32 * s - tsz.cx - 12 * s;
         SIZE sz{};
         GetTextExtentPoint32A(dc, ver.c_str(), (int)ver.size(), &sz);
@@ -700,7 +700,7 @@ void paint_menu(HDC dc, uint32_t w, uint32_t h, int s) {
         DeleteObject(small);
     }
     SelectObject(dc, body);
-    if (page == 1) {   // (hylia) the Controls page
+    if (page == 1) {   // (ocarune) the Controls page
         TextOutA(dc, 16 * s + 110 * s, 12 * s + 4 * s, "Controls", 8);
         const int rh = 24 * s, top = 64 * s, xpad = 200 * s, xkey = 390 * s;
         SetTextColor(dc, RGB(140, 150, 144));
@@ -1215,7 +1215,7 @@ void menu_tick() {
         press[i] = host && host->take_key_press ? mine && queued : down && !held[i];
         held[i] = down;
     }
-    // (hylia) the gamepads, by position: Home, or Select and Start together, as Insert; the D-pad as the arrows,
+    // (ocarune) the gamepads, by position: Home, or Select and Start together, as Insert; the D-pad as the arrows,
     // the bottom face button as Enter, the right one as Esc (not while a binding waits for its button)
     static uint32_t pad_held = 0;
     const uint32_t raw = mine && host && host->pad_raw ? host->pad_raw() : 0, pad_press = raw & ~pad_held;
@@ -1268,7 +1268,7 @@ void menu_tick() {
         // layout is not applied over them at start)
         if (open_now.load()) opts.pad_layout = detect_pad_layout();
     }
-    if (open_now.load() && page == 1) {   // (hylia) the Controls page
+    if (open_now.load() && page == 1) {   // (ocarune) the Controls page
         if (!can_bind()) page = 0;
         else if (listening) {
             if (press[5] || prof_now() > listen_end) listening = 0, changed = true;   // (Esc, or nothing for a while)

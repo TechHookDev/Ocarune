@@ -422,12 +422,12 @@ bool import_pool(uint64_t lo, uint64_t hi, Pool& p) {
 
 } // namespace
 
-// (hylia) guest memory's page table, for the pointers shaders follow (spirv_emit_context.cpp): a page's device address, 0 for none. Written as
+// (ocarune) guest memory's page table, for the pointers shaders follow (spirv_emit_context.cpp): a page's device address, 0 for none. Written as
 // pools come and go, before the submissions that can reach them
 uint64_t* guest_pages = nullptr;
 uint64_t guest_pages_address = 0;
 VkBuffer guest_pages_buffer = VK_NULL_HANDLE;
-// (hylia, 11-07) A change to the table made while a submission is recorded goes into that submission's upload commands, after
+// (ocarune, 11-07) A change to the table made while a submission is recorded goes into that submission's upload commands, after
 // the mirror copies it records there, instead of into the table at once: the table is read by the GPU, and work submitted
 // before (still running, or queued) read the new entries early. A pool's range zeroed at its merge read as unmapped (zero
 // counts: the culling's foliage gone for a frame), and a mirror made but not yet filled read as garbage: the foliage
@@ -1359,7 +1359,7 @@ std::unique_ptr<Capture> capture_make() {
     const int64_t n = mirrored.empty() || !host->collect_written_in ? 0
                     : host->collect_written_in(reinterpret_cast<const uint64_t(*)[2]>(mirrored.data()), (int)mirrored.size(), &pages);
     const auto t_scan = std::chrono::steady_clock::now();
-    // (hylia) A page the CPU wrote that a submission still on the GPU writes back: the copy waits for that write-back.
+    // (ocarune) A page the CPU wrote that a submission still on the GPU writes back: the copy waits for that write-back.
     // OoT's exposure meter page is written by both: the GPU adds the frame's light into it and the CPU sets the sums back to
     // 0 and fills in the rest. The CPU runs a frame ahead, and a copy taken before the write-back had landed had the GPU's
     // words from the frame before; the mirror sync of the page put them back over the GPU's newer ones, and the exposure
@@ -1549,7 +1549,7 @@ bool memory_take_capture(uint64_t value, uint64_t completed) {
     }
     return take_capture(std::move(c), value, completed);
 }
-/// (hylia) A capture made and taken at once, for a submission going on from a wait the CPU's signal met
+/// (ocarune) A capture made and taken at once, for a submission going on from a wait the CPU's signal met
 /// (vk_replay.cpp resume_queue): the CPU's writes up to that signal, which the console's GPU reads after its wait
 bool memory_capture_now(uint64_t value, uint64_t completed) {
     if (completed > mem_completed) mem_completed = completed;
@@ -1888,7 +1888,7 @@ struct WriteBack {
     uint64_t lo, hi;   // offsets in the pool
 };
 std::vector<WriteBack> writebacks;
-// (hylia, 11-07) The counter reports the replay writes into guest memory on the CPU (vk_replay.cpp NOP_REPORT_COUNTER), by
+// (ocarune, 11-07) The counter reports the replay writes into guest memory on the CPU (vk_replay.cpp NOP_REPORT_COUNTER), by
 // guest address: a mirrored pool's write-back copied the GPU's mirror over them at the end of the submission, the mirror's
 // stale words over the replay's newer ones, and the next render condition read those: a lighting pass left out, the whole lit
 // scene black for a frame (the one-frame dark flashes, every 15-30 frames; 17 in 40 s of Kokiri, 0 with mirrors off). They are
@@ -2337,7 +2337,7 @@ BufferRef gpu_buffer_bind(uint64_t gpu, uint64_t size, bool written) {
 constexpr uint64_t kIdleEpochs = 600, kLongIdle = 6000;
 int64_t st_mirrors_freed = 0;
 uint64_t st_mirror_bytes_freed = 0;
-// (hylia) A freed mirror's buffer is destroyed only once the GPU is past everything recorded until then. Its pool's
+// (ocarune) A freed mirror's buffer is destroyed only once the GPU is past everything recorded until then. Its pool's
 // last_value counts the draws and dispatches that bound it, not the shaders that reach it through the guest page table:
 // a culling or fog compute pass already running read a mirror destroyed under it (device lost in 53caac5f and ee7764a6,
 // issues 132 and 195, AMD after a scene change). The table goes back to guest memory at once, as before
@@ -2372,7 +2372,7 @@ void reap_mirrors() {   // (pools_mu held)
     }
 }
 void retired_imports_give_back() {   // (pools_mu held)
-    // (hylia) Kept by default on Windows: giving them back is for the Linux amdgpu submit above, and on Windows an Intel Arc
+    // (ocarune) Kept by default on Windows: giving them back is for the Linux amdgpu submit above, and on Windows an Intel Arc
     // B390 lost the device entering Kokiri every time with it and 1 run in 5 without (issue 17, fuxau); the AMD device losses
     // on the Ally X (309) and RX 6600 (571) came right after retired pools went back. RX_VK_KEEP_RETIRED=0 or 1 chooses
 #ifdef _WIN32
@@ -2468,7 +2468,7 @@ void imports_give_back() {   // (pools_mu held)
         for (VkDeviceMemory m : p.pieces) vkFreeMemory(dev.device, m, nullptr);   // (a pool imported as several dma-bufs)
         evicted_pools.pop_front();
     }
-    // (hylia) Off by default on Windows, as giving retired imports back is (RX_VK_KEEP_RETIRED, retired_imports_give_back:
+    // (ocarune) Off by default on Windows, as giving retired imports back is (RX_VK_KEEP_RETIRED, retired_imports_give_back:
     // device losses on Intel Arc and AMD right after imports went back): RX_VK_IMPORT_HIGH=85 turns it on there
     static const char* env_high = getenv("RX_VK_IMPORT_HIGH");
 #ifdef _WIN32
@@ -2555,7 +2555,7 @@ void memory_begin_submission() {
     }
 }
 
-/// (hylia) Before a command buffer's parallel segments: every mirrored pool synced once, into the replay thread's
+/// (ocarune) Before a command buffer's parallel segments: every mirrored pool synced once, into the replay thread's
 /// recording, ahead of all of them. Workers record out of order, so a pool a later segment bound first was synced in
 /// that segment's upload, which runs after the earlier segments' work, and put the CPU's pages back over what the GPU
 /// had just written in them (one frame of wrong lighting or exposure: 5x the flashes of serial replay). A segment
@@ -2579,7 +2579,7 @@ bool mirror_make(Pool& pool) {
     Pool* p = &pool;
     {
         const uint64_t n = p->hi - p->lo;
-        // (hylia: RX_VK_MIRROR_TIGHT=1, none while VRAM is 90% full. Off: 8 GB cards sit there all the time, and without their mirrors
+        // (ocarune: RX_VK_MIRROR_TIGHT=1, none while VRAM is 90% full. Off: 8 GB cards sit there all the time, and without their mirrors
         // the GPU read game memory over PCIe)
         static const bool tight_rule = getenv("RX_VK_MIRROR_TIGHT") != nullptr;
         uint64_t used = 0, allowed = 0;
@@ -2597,7 +2597,7 @@ bool mirror_make(Pool& pool) {
             p->mstate = Pool::MIRROR_REFUSED;
             return false;
         }
-        {   // (hylia) the page table points at the mirror: what the GPU wrote is there, and guest memory has it only after the write-back
+        {   // (ocarune) the page table points at the mirror: what the GPU wrote is there, and guest memory has it only after the write-back
             VkBufferDeviceAddressInfo da{VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO};
             da.buffer = p->mirror;
             const uint64_t ma = vkGetBufferDeviceAddress(dev.device, &da);
@@ -2765,7 +2765,7 @@ void memory_end_submission(VkCommandBuffer cmd) {
             for (const VkBufferCopy& r : runs) st_wb_bytes += (int64_t)r.size, gp.bytes += r.size;
             gp.items += (int)runs.size();
             for (const VkBufferCopy& r : runs) wb_pages_note(p->lo + r.dstOffset, p->lo + r.dstOffset + r.size, mem_rec_value);   // (EvilBoyce)
-            {   // (hylia) RX_VK_LOG_WRITEBACK=1: the pools written back the most, every 600 write-back submissions
+            {   // (ocarune) RX_VK_LOG_WRITEBACK=1: the pools written back the most, every 600 write-back submissions
                 static const bool log_wb = getenv("RX_VK_LOG_WRITEBACK") != nullptr;
                 if (log_wb) {
                     static std::unordered_map<uint64_t, std::pair<uint64_t, uint64_t>> by_pool;   // lo -> bytes, runs

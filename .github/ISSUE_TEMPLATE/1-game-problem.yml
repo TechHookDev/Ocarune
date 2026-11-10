@@ -6,15 +6,15 @@ body:
     attributes:
       value: |
         Thanks for testing. Before you start:
-        - **Check the [newest release](https://github.com/TechHookDev/Hylia/releases/latest) first.** Every release includes all the fixes before it, and yours may already be fixed.
+        - **Check the [newest release](https://github.com/TechHookDev/Ocarune/releases/latest) first.** Every release includes all the fixes before it, and yours may already be fixed.
         - **Search the open issues.** If yours is there, add your details to it instead.
         - English, please.
-        - **Never attach game files**: no hylia.exe, image.bin, the `.bin` caches, romfs or exefs files, keys or saves.
+        - **Never attach game files**: no ocarune.exe, image.bin, the `.bin` caches, romfs or exefs files, keys or saves.
   - type: input
     id: version
     attributes:
-      label: Hylia version
-      description: The version you built (the release you installed), or the first line of `oot_log.txt` if it starts with `hylia`.
+      label: Ocarune version
+      description: The version you built (the release you installed), or the first line of `oot_log.txt` if it starts with `ocarune`.
       placeholder: v1.0.0
     validations:
       required: true
@@ -78,7 +78,7 @@ body:
     id: injectors
     attributes:
       label: Other software hooked into the game
-      description: ReShade, shader-cache tools (SCSKiller and the like), overlays or frame-generation injectors change what Hylia does. Please test without them before reporting.
+      description: ReShade, shader-cache tools (SCSKiller and the like), overlays or frame-generation injectors change what Ocarune does. Please test without them before reporting.
       options:
         - No, nothing hooked in
         - Yes (named under "Changes from the defaults")
@@ -88,7 +88,7 @@ body:
     id: log
     attributes:
       label: oot_log.txt
-      description: Drag the file here. It is beside hylia.exe and holds the last run; the four runs before are `oot_log.1.txt` (the one before) to `.4.txt`. If you started the game again after the problem, attach `oot_log.1.txt` too. It has no game files in it.
+      description: Drag the file here. It is beside ocarune.exe and holds the last run; the four runs before are `oot_log.1.txt` (the one before) to `.4.txt`. If you started the game again after the problem, attach `oot_log.1.txt` too. It has no game files in it.
     validations:
       required: true
   - type: textarea
@@ -104,5 +104,5 @@ body:
           required: true
         - label: I searched the open issues for this problem.
           required: true
-        - label: I'm not attaching game files, keys, hylia.exe, the .bin caches or saves.
+        - label: I'm not attaching game files, keys, ocarune.exe, the .bin caches or saves.
           required: true

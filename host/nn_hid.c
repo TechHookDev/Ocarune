@@ -1,7 +1,7 @@
 /* nn::hid: one Pro Controller (FullKey style) on Npad No.1, from every XInput gamepad and the keyboard and mouse at
    once. Buttons map by position (the Xbox bottom face button is the Switch's bottom one, B).
 
-   (hylia) What presses each button, on a gamepad and on the keyboard, is the player's: the Insert menu's Controls
+   (ocarune) What presses each button, on a gamepad and on the keyboard, is the player's: the Insert menu's Controls
    page (gpu/vk/vk_menu.cpp) changes it, kept in oot_options.ini (binds_load). The defaults:
    Keyboard (totk-pc-recomp's layout): WASD left stick, arrows or IJKL right stick (camera), Space X (jump), E A
    (action), Shift B (run/cancel), Q L (abilities), R R, Z ZL, X or F ZR (bow), Ctrl left-stick click (crouch), C
@@ -375,7 +375,7 @@ static void stick_max(int32_t stick[4], const int32_t v[4]) {
         if ((v[i] < 0 ? -v[i] : v[i]) > (stick[i] < 0 ? -stick[i] : stick[i])) stick[i] = v[i];
 }
 
-/* ---- (hylia) the controls: the gamepad input (by position) and the keys that press each Switch button, from
+/* ---- (ocarune) the controls: the gamepad input (by position) and the keys that press each Switch button, from
    oot_options.ini beside the executable when it has them: pad_<button>=<HOS_PAD_* position, -1 none> and
    key_<button>=<key code>,<key code> (Windows key codes, 0 none), <button> one of bind_names. Read once, at the
    first use; what the file leaves out keeps its default. Keys only, after the Switch's buttons (HOS_KEY_*): the left
@@ -662,13 +662,13 @@ static void read_input(uint64_t *buttons, int32_t stick[4]) {
        left set in a shell no longer leaves the game without controls), and otherwise the pads count only
        while the game's window is in front, like the keyboard: XInput is global, so a test run in the background
        used to follow the player's pad (and pressed things in its own menus). */
-    /* (hylia) The player's devices count during a script too (the user plays along in test runs, 2026-11-05):
+    /* (ocarune) The player's devices count during a script too (the user plays along in test runs, 2026-11-05):
        the presses add to theirs. HOS_INPUT_EXCLUSIVE=1: the script alone until 5 s after its last press, as before */
     static int exclusive = -1;
     if (exclusive < 0) exclusive = getenv("HOS_INPUT_EXCLUSIVE") != NULL;
     if (exclusive && npresses > 0 && script_elapsed_ms(hos_now_ns()) < script_end_ms + 5000)
         return;
-    /* (hylia, issue 389) A scripted press (HOS_INPUT_SCRIPT, HOS_INPUT_LIVE) is the test's own, not the
+    /* (ocarune, issue 389) A scripted press (HOS_INPUT_SCRIPT, HOS_INPUT_LIVE) is the test's own, not the
        player's: it counts with the game's window behind another one, so a test run can drive the game on one
        monitor while the player works in the front window. HOS_INPUT_BACKGROUND still decides the pads. */
     static int scripted_background = -1;
@@ -683,7 +683,7 @@ static void read_input(uint64_t *buttons, int32_t stick[4]) {
         if (pads_in_background(env, rx_option(4, 0))) pads_read(buttons, stick);
         return;
     }
-    {   /* (hylia) while the Insert menu is open the pads are its own, as the keyboard is (key()), and after it
+    {   /* (ocarune) while the Insert menu is open the pads are its own, as the keyboard is (key()), and after it
            closed until they are let go (the press that closed it never reaches the game) */
         uint64_t pb = 0;
         int32_t ps[4] = {0};
@@ -878,7 +878,7 @@ static void vibration_send(uint64_t handle, uint64_t value) {
     const int dev = (G32(handle) >> 16) & 1;
     amp[dev][0] = rumble_motor(v[0], v[1], 140.0f, 400.0f);
     amp[dev][1] = rumble_motor(v[2], v[3], 200.0f, 700.0f);
-    {   /* (hylia, issue 263) what the game asks for: the first values, then a count now and then */
+    {   /* (ocarune, issue 263) what the game asks for: the first values, then a count now and then */
         static long long n, strong;
         static float peak;
         if (v[0] > peak) peak = v[0];

@@ -1,5 +1,5 @@
 <h1 align="center">
-  Hylia
+  Ocarune
   <br>
   <sub>Ocarina of Time, native on your PC</sub>
 </h1>
@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="#why-hylia">Why Hylia</a> ·
+  <a href="#why-ocarune">Why Ocarune</a> ·
   <a href="#requirements">Requirements</a> ·
   <a href="#install">Install</a> ·
   <a href="#out-of-the-box-settings">Settings</a> ·
@@ -22,12 +22,12 @@
 
 > [!IMPORTANT]
 > This repository contains **no game, no keys and no executable**, and it does not tell you how to get them.
-> You need your own copy of the game (a `.nup` package, or its extracted `exefs` and `romfs`). Everything Hylia makes
+> You need your own copy of the game (a `.nup` package, or its extracted `exefs` and `romfs`). Everything Ocarune makes
 > comes from your copy, is made on your PC and stays on it. Never share those files.
 
-## Why Hylia
+## Why Ocarune
 
-Hylia is a **static recompilation**. Your copy of the game is translated to C once, compiled into a Windows program, the
+Ocarune is a **static recompilation**. Your copy of the game is translated to C once, compiled into a Windows program, the
 console's system software is reimplemented, and the Switch 2 graphics calls are replayed on Vulkan. Nothing is emulated
 at run time, so the game runs at the speed of your hardware.
 
@@ -57,7 +57,7 @@ at run time, so the game runs at the speed of your hardware.
 
 ### The easy way: the setup wizard
 
-1. Download `Hylia-Setup.zip` from the [latest release](https://github.com/TechHookDev/Hylia/releases/latest) and
+1. Download `Ocarune-Setup.zip` from the [latest release](https://github.com/TechHookDev/Ocarune/releases/latest) and
    unzip it anywhere.
 2. Run **`Setup.exe`**.
 3. **Game file:** pick your `.nup`. The wizard checks it is the right version before it starts.
@@ -85,7 +85,7 @@ Download the newest release and run the wizard again on the same folder. Your sa
 
 ## Out-of-the-box settings
 
-Hylia ships with the settings we tuned for the best result on a mid-to-high-end card (developed on an RTX 5070). You do
+Ocarune ships with the settings we tuned for the best result on a mid-to-high-end card (developed on an RTX 5070). You do
 not have to touch anything:
 
 | Setting | Default | What it does |
@@ -136,7 +136,7 @@ Contributing: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Credits
 
-Hylia is inspired by, and builds on the open work of, many people:
+Ocarune is inspired by, and builds on the open work of, many people:
 
 - The static-recompilation approach and the **a64-kit** tools come from the open TOTKPort / mkw-recomp line of work
   by **NotRexed** (see `third_party/a64-kit`).
@@ -151,8 +151,8 @@ Full third-party list: [NOTICE.md](NOTICE.md).
 
 ## License
 
-Hylia is free software under the [GNU General Public License v3.0 or later](LICENSE). If you share a build, share its
+Ocarune is free software under the [GNU General Public License v3.0 or later](LICENSE). If you share a build, share its
 source with it. Third-party parts keep their own notices in their folders.
 
-Hylia is an unofficial fan project, not affiliated with or endorsed by Nintendo. The Legend of Zelda and Ocarina of
+Ocarune is an unofficial fan project, not affiliated with or endorsed by Nintendo. The Legend of Zelda and Ocarina of
 Time are trademarks of Nintendo. Use it only with a copy of the game you own.

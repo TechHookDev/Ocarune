@@ -51,7 +51,7 @@ namespace {
 
 // ---- submissions: a timeline semaphore; value n = the n-th submit done ----
 VkSemaphore timeline = VK_NULL_HANDLE;
-// ---- (hylia) recordings by number: a second timeline, signalled at the end of every recording with its number, and the
+// ---- (ocarune) recordings by number: a second timeline, signalled at the end of every recording with its number, and the
 // recording each submission was finished in. The timeline above is signalled only as far as no older submission is stopped
 // at a wait, and every NVN queue's submissions share its numbers: a fence taken on one queue waited for the other queues'
 // stopped work too, and a wait for it forced that work past the waits it stopped at (OoT's presentation work run ahead of
@@ -128,7 +128,7 @@ uint64_t completed() {
 // On amdgpu every command submission pays for all imported host memory (userptr) again; the replay made ~6 a frame.
 // Held submits go out at the next point that needs the GPU's results or the queue's order: a wait, a readback, a
 // present, a sparse bind, another submit (queue_flush_locked under dev.present_mu).
-// (hylia) on by default with Mesa's RADV, where it was measured (issue 413: a Radeon 8060S on Bazzite, ~10 -> 30-50 fps, the
+// (ocarune) on by default with Mesa's RADV, where it was measured (issue 413: a Radeon 8060S on Bazzite, ~10 -> 30-50 fps, the
 // replay's queue submit ~70 -> ~6 ms a frame); elsewhere as before. RX_VK_BATCH=0 / 1: off / on on any driver
 bool batch_on() {
     static const bool on = [] {
@@ -384,7 +384,7 @@ std::mutex st_barrier_flags_mu;   // (a parallel replay's threads count their ba
 // game's three queues order their work with events (a command buffer waits for another queue's to reach a stage);
 // replayed on one queue in the order they were submitted, a waiter submitted before its signaller ran first ----
 std::unordered_map<uint64_t, uint32_t> ev_values;
-// (hylia) The CPU's signals, while a replay holds replay_mu: the main thread stopped for it in nvnEventSignal, ~1.7 ms
+// (ocarune) The CPU's signals, while a replay holds replay_mu: the main thread stopped for it in nvnEventSignal, ~1.7 ms
 // a frame of the critical path. They wait here for the replay's next look at the events (ev_cpu_apply).
 std::mutex ev_cpu_mu;
 std::vector<std::pair<uint64_t, uint32_t>> ev_cpu_pending;
@@ -744,7 +744,7 @@ void replay(VkCommandBuffer& cmd, NvnState& s, const uint8_t* p, const uint8_t* 
                 const uint64_t base = ts_global ? (ts_base ? ts_base : (ts_base = ns)) : std::min(ns, ts_anchor_ns ? ts_anchor_ns : ns);
                 ns = base + (uint64_t)((double)(ns - base) * ts_scale);
             }
-            // (hylia) Every samples-passed report reads 4096: everything visible. The count of 16 a draw since the reset went
+            // (ocarune) Every samples-passed report reads 4096: everything visible. The count of 16 a draw since the reset went
             // up and down from frame to frame, and OoT's sun visibility followed it: for one frame in ~70 the sunlight left the
             // ground and the haze brightened over the whole picture (one-frame flicker, most of it at load-in; 30-52 per 2,700
             // frames in Kokiri, 4-6 with this, RX 7900 GRE). RX_VK_OCC_FIXED=<n>: that value; -1: the per-draw count as before
@@ -807,7 +807,7 @@ void replay(VkCommandBuffer& cmd, NvnState& s, const uint8_t* p, const uint8_t* 
             full_barrier(cmd);
             break;
         }
-        case NOP_CLEAR_BUF: {   // (hylia) nvnCommandBufferClearBuffer: on the GPU in order, as a buffer copy
+        case NOP_CLEAR_BUF: {   // (ocarune) nvnCommandBufferClearBuffer: on the GPU in order, as a buffer copy
             const auto c0 = payload<nvn_p_clear_buf>(a, avail);
             // (the small ones are the counters the reports and conditions use, which happen here on the CPU in stream order. Left
             // to the GPU, a clear earlier in the stream reached guest memory after a later report and wiped it, as far as the GPU
@@ -987,7 +987,7 @@ void replay(VkCommandBuffer& cmd, NvnState& s, const uint8_t* p, const uint8_t* 
         case NOP_BIND_UBO: case NOP_BIND_SSBO: {
             const auto b = payload<nvn_p_bind_buf>(a, avail);
             if (b.stage >= kNvnStages) log_stage_bind(h.op, b.stage);
-            {   // (hylia) RX_VK_LOG_MESH_BINDS=1: what the game binds to the task and mesh stages, 80 lines
+            {   // (ocarune) RX_VK_LOG_MESH_BINDS=1: what the game binds to the task and mesh stages, 80 lines
                 static const bool on = getenv("RX_VK_LOG_MESH_BINDS") != nullptr;
                 static std::atomic<int> told{0};
                 if (on && b.stage >= 6 && b.size != 0x100 && told++ < 300)
@@ -1084,7 +1084,7 @@ void replay(VkCommandBuffer& cmd, NvnState& s, const uint8_t* p, const uint8_t* 
             for (int k = 0; k < kNvnStages; k++) s.tex_gen[k] = s.bind_gen;
             break;
         case NOP_COPY_STRIDE: s.copy_stride = payload<nvn_p_copy_stride>(a, avail).stride; break;
-        case NOP_PUSH_CONST: {   // (hylia) compute push constants, kept in the state (vk_bank.cpp serves them from c0)
+        case NOP_PUSH_CONST: {   // (ocarune) compute push constants, kept in the state (vk_bank.cpp serves them from c0)
             const auto u = payload<nvn_p_push_const>(a, avail);
             if (u.size && u.size <= avail - sizeof u && (uint64_t)u.offset + u.size <= sizeof s.cs_push) {
                 const uint8_t* src = a + sizeof u;
@@ -1166,7 +1166,7 @@ void replay(VkCommandBuffer& cmd, NvnState& s, const uint8_t* p, const uint8_t* 
                 // (DrawMeshTasks(first, count): the count of task workgroups, as Eden draws NVN2's mesh draws; a
                 // first task other than 0 has no Vulkan counterpart)
                 da.groups[0] = d.y, da.groups[1] = 1, da.groups[2] = 1;
-                if (d.kind == 0) da.first_task = d.x;   // (hylia: the task programs add it, vk_draw.cpp's mesh_args)
+                if (d.kind == 0) da.first_task = d.x;   // (ocarune: the task programs add it, vk_draw.cpp's mesh_args)
                 da.indirect = d.indirect, da.count_addr = d.count_addr, da.max = d.max, da.stride = d.stride;
                 draw(cmd, s, da);
             }
@@ -1811,7 +1811,7 @@ void resume_queue(uint64_t queue, bool forced) {
     QueueRun& q = qruns[queue];
     for (;;) {
         if (q.waiting) {
-            // (hylia) a wait for an event the CPU signals, met: the game wrote what this work reads after it submitted it,
+            // (ocarune) a wait for an event the CPU signals, met: the game wrote what this work reads after it submitted it,
             // up to the signal (OoT's presentation queue waits for its frame's data this way, 1 frame in 12 here). The
             // console's GPU reads memory after its wait; the capture taken at the submit had the frame before's: the fog and
             // exposure of the frame before, for a frame. A capture now, for what follows the wait. RX_VK_RESUME_CAPTURE=0: none
@@ -1872,7 +1872,7 @@ void drain(int why) {
     update_blocked();
 }
 
-// ---- (hylia) the same on the submitting thread, the default. do_submit replayed each queue's submission as it came and went
+// ---- (ocarune) the same on the submitting thread, the default. do_submit replayed each queue's submission as it came and went
 // past every wait: 2 of 3 were not met. A lit pass waiting for another queue's work that had not been submitted yet read what
 // that work makes before it was made, and for a frame lit surfaces came out black (a race with the game's threads: 3-9% of
 // frames with frame generation off, less the less they overlapped). The stopped work goes on from whichever thread's submit or
@@ -1895,7 +1895,7 @@ void sync_drain(int why) {
     drain(why);
     update_blocked();
 }
-/// (hylia) The stopped queues whose waits are met go on; none is forced past its wait
+/// (ocarune) The stopped queues whose waits are met go on; none is forced past its wait
 void sync_settle() {
     if (!blocked_n.load()) return;
     std::lock_guard lk(sync_order_mu);
@@ -1946,7 +1946,7 @@ uint64_t get_replayed() {
     const uint64_t hold = replayed_hold.load();
     return hold ? std::min(hold, completed()) : completed();
 }
-/// (hylia) Waits for the recording submission value f (or the recording of value f) was finished in, on the recordings'
+/// (ocarune) Waits for the recording submission value f (or the recording of value f) was finished in, on the recordings'
 /// timeline: true when that recording is known (the result in *ok), false when it is not (f not finished yet)
 bool wait_recorded(uint64_t f, uint64_t timeout_ns, int* ok) {
     if (!rec_timeline || per_queue_fences_off()) return false;
@@ -1965,7 +1965,7 @@ bool wait_recorded(uint64_t f, uint64_t timeout_ns, int* ok) {
     return true;
 }
 uint64_t fence();
-/// (hylia) A fence of one queue (nvnQueueFenceSync): the value of that queue's last submission
+/// (ocarune) A fence of one queue (nvnQueueFenceSync): the value of that queue's last submission
 uint64_t fence_q(uint64_t queue) {
     if (async_on() || !sync_waits_on() || per_queue_fences_off() || !queue) return fence();
     std::lock_guard lk(sync_order_mu);
@@ -1975,7 +1975,7 @@ uint64_t fence_q(uint64_t queue) {
 int wait(uint64_t f, uint64_t timeout_ns) {
     if (completed() >= f) return 1;
     queue_flush_for(FR_WAIT);
-    // (hylia) a fence of one queue whose work up to it is recorded whole (none of it stopped): that work, not the other
+    // (ocarune) a fence of one queue whose work up to it is recorded whole (none of it stopped): that work, not the other
     // queues' stopped work the timeline above waits for (which a wait for it forced past its waits after RX_VK_WAIT_HOLD_US)
     if (!async_on() && sync_waits_on() && !per_queue_fences_off()) {
         bool mine = false;
@@ -2116,7 +2116,7 @@ void invalidate(uint64_t gpu, uint64_t size) {
             const uint64_t f0 = fence(), c0 = completed();
             const bool behind0 = replay_behind();
             static const bool no_catchup = getenv("RX_VK_READBACK_NO_CATCHUP") != nullptr;   // (A/B: recorded work only)
-            // (hylia) not on the submitting thread's replay (the default): there what is handed over is recorded at once, and
+            // (ocarune) not on the submitting thread's replay (the default): there what is handed over is recorded at once, and
             // the work not recorded yet is stopped at an event wait. Catching up forced it past that wait, ahead of the work it
             // waits for (OoT's presentation work before the scene's: the fog of the frame before, for a frame, at 1 in 20 of the
             // exposure readbacks). The write-back is waited for on the recordings' timeline instead, which a stopped queue
@@ -2168,7 +2168,7 @@ void invalidate(uint64_t gpu, uint64_t size) {
     // only, after probes that found no texture, left MKW's Grand Prix waiting at its map for a texture's texels)
     static const bool always = getenv("RX_VK_INVALIDATE_WAIT") != nullptr;
     if (!size) return;
-    // (hylia) and on the submitting thread's replay, the catch-up lets on what may go without forcing anything past its wait
+    // (ocarune) and on the submitting thread's replay, the catch-up lets on what may go without forcing anything past its wait
     // (once the exposure readback above no longer did, this one forced OoT's presentation work on, every frame or two)
     const bool unforced = !async_on() && sync_waits_on() && !per_queue_fences_off();
     if (!texture_gpu_written_in(gpu, size)) {
@@ -2433,7 +2433,7 @@ void log_frame_stats() {
              (st_ub_overlays - l_ubo) / 120.0, (st_wait_ns - l_wait) / 120.0 / 1e6, (long long)pl, pms,
              (long long)tr, (long long)fl, texture_count(), (unsigned long long)(texture_bytes() >> 20));
         draw_skip_report(120.0);
-        {   // (hylia: the full barriers recorded and the ones left out as the second of two in a row, RX_VK_BARRIER_DEDUPE_OFF=1)
+        {   // (ocarune: the full barriers recorded and the ones left out as the second of two in a row, RX_VK_BARRIER_DEDUPE_OFF=1)
             static int64_t l_made, l_left;
             int64_t made = 0, left = 0;
             barrier_stats(&made, &left);
@@ -2480,7 +2480,7 @@ void log_frame_stats() {
 
 uint64_t present_value = 0;   // (the present job's value, handed out as it came; 0: the next one)
 void do_present(const nvn_tex* t, const int crop[4]) {
-    {   // (hylia, RX_VK_PASS_TRACE_AT=<frames>: the passes of the frames around these frame numbers, for finding what a frame is made of)
+    {   // (ocarune, RX_VK_PASS_TRACE_AT=<frames>: the passes of the frames around these frame numbers, for finding what a frame is made of)
         static std::atomic<int64_t> seen{0};
         static const int64_t at = getenv("RX_VK_PASS_TRACE_AT") ? atoll(getenv("RX_VK_PASS_TRACE_AT")) : 0;
         if (at && ++seen % at == 0) pass_traces_log(texture_frame_no() - 1, texture_frame_no());
@@ -2676,7 +2676,7 @@ void do_present(const nvn_tex* t, const int crop[4]) {
                     sum += q[0] + q[1] + q[2];
                     ch[0] += q[0], ch[1] += q[1], ch[2] += q[2];
                 }
-                // (hylia: a picture blown out to white, the HUD on it: written as white_<present>.png, 40 of them)
+                // (ocarune: a picture blown out to white, the HUD on it: written as white_<present>.png, 40 of them)
                 static int white_left = 40;
                 if (at_present > 600 && white * 100 > n * 40 && white_left > 0) {
                     white_left--;
@@ -2806,7 +2806,7 @@ void do_present(const nvn_tex* t, const int crop[4]) {
 
 } // namespace
 
-// (hylia) RX_VK_FRAMELOG=<file>: every frame shown, the game's and the made ones, as they go to the screen, 320x180, while
+// (ocarune) RX_VK_FRAMELOG=<file>: every frame shown, the game's and the made ones, as they go to the screen, 320x180, while
 // <file>.go exists (scripts/framelog.py finds the flashes). Taken at the last step and written on a thread of its own, so
 // that the game keeps its speed: a shot of every frame at 1280x720 held it at 30 fps, where the flashes may not show.
 // A record: u64 time (ns), u32 sequence, u32 kind (0 the game's, 1 made), 320x180 RGBA.
@@ -2941,7 +2941,7 @@ void framelog_collect(int slot) {
 } // namespace
 std::atomic<uint32_t> present_kind{0};   // (vk_framegen.cpp: 1 while a made frame goes out)
 
-// (hylia) One thread in here at a time; the queue's own lock (dev.present_mu, the replay's submits take it too) is held only
+// (ocarune) One thread in here at a time; the queue's own lock (dev.present_mu, the replay's submits take it too) is held only
 // for the submit and the present. Held over vkAcquireNextImageKHR and the fence, it stopped the replay's submits for as long as
 // the swapchain had no image free, twice a frame with frame interpolation.
 std::mutex present_image_mu;
@@ -3178,7 +3178,7 @@ int presents_ahead() {   // (RX_VK_PRESENTS_AHEAD=<n>: how many presents the gam
 }
 
 bool async_on() {
-    // (hylia: off by default. OoT rewrites double-buffered data right after a submit with no fence, which lands
+    // (ocarune: off by default. OoT rewrites double-buffered data right after a submit with no fence, which lands
     // inside a replay running behind (TotK Recomp's reason to replay on the submitting thread): whole-screen white or
     // black frames, 28 per 1000 gameplay frames, against 1.3 synchronous, at the same frame rate. RX_VK_ASYNC=1: on)
     static const bool on = getenv("RX_VK_ASYNC") && atoi(getenv("RX_VK_ASYNC")) != 0;

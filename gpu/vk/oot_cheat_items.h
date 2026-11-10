@@ -34,7 +34,7 @@
     OOT_ITEM("Nayru's Love", "Item_NayruLove", 0) \
     OOT_ITEM("Fairy Ocarina", "Item_Ocarina_Fairy", 0) \
     OOT_ITEM("Ocarina of Time", "Item_Ocarina_Time", 0) \
-    OOT_ITEM("Hylia", "Item_Hylia", 0) \
+    OOT_ITEM("Ocarune", "Item_Hylia", 0) \
     OOT_ITEM("Longshot", "Item_Longshot", 0) \
     OOT_ITEM("Boomerang", "Item_Boomerang", 0) \
     OOT_ITEM("Lens of Truth", "Item_GlassTruth", 0) \

@@ -994,7 +994,7 @@ void CollectShaderInfoPass(Environment& env, IR::Program& program) {
         case Stage::VertexA:
         case Stage::VertexB:
             return 0x110u;
-        case Stage::Task:   // (hylia: NVN2's tables, gpu/vk/vk_bank.cpp. At the vertex and tessellation stages' here no buffer of
+        case Stage::Task:   // (ocarune: NVN2's tables, gpu/vk/vk_bank.cpp. At the vertex and tessellation stages' here no buffer of
             return 0x670u;  // these programs counted as used, and every read through a pointer into one gave 0)
         case Stage::Mesh:
             return 0x770u;
