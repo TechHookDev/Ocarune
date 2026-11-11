@@ -12,6 +12,7 @@ Its first line is the version.
 | The build fails | Press **Show details** in the wizard and open an issue with the last 50 lines. Low disk space (20 GB needed) is the usual cause |
 | Opens and closes, or the log says "device lost" | Update your graphics driver. Try *Robust buffers: On* and a lower Quality preset |
 | Parts of the picture are missing, or a message about mesh shaders | The card or driver has no `VK_EXT_mesh_shader` (older than GTX 16 / RX 6000). Update the driver; older cards are not supported |
+| The window opens, stays black or dark, then closes (RX 580, GTX 10 series, older cards) | The card is below the requirements (no mesh shaders). Not fixable in software; see Requirements in the readme |
 | Black screen at start | The first start prepares shaders and can take several minutes. If the log stops growing for 10 minutes, report it |
 | Low fps | Check the FPS counter: lower **Resolution** to 67% or 50%, pick a Quality preset for your card, make sure **GPU device** is your dedicated GPU. Castle Town is CPU-heavy |
 | Freezes in big scenes (0 fps) | Lower `RX_VK_VRAM_MB` in `oot_env.txt` (5120 suits 12 GB cards; use 3500 on 8 GB) |

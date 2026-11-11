@@ -65,7 +65,7 @@ at run time, so the game runs at the speed of your hardware.
 | | |
 |---|---|
 | OS | Windows 10 or 11, 64-bit |
-| GPU | Vulkan 1.3 with **mesh shader** support (NVIDIA GTX 16 / RTX series, AMD RX 6000 and newer, recent Intel Arc). 8 GB of video memory or more is recommended |
+| GPU | Vulkan 1.3 with **mesh shader** support (NVIDIA GTX 16 / RTX series, AMD RX 6000 and newer, recent Intel Arc). 8 GB of video memory or more is recommended. **Not supported:** Radeon RX 400/500 (Polaris, e.g. RX 580) and older: no mesh shaders, and the game's 32-lane shaders do not suit their 64-lane design |
 | CPU / RAM | A modern 6-core CPU and 16 GB of RAM or more. The build compiles for 10 to 45 minutes |
 | Disk | About 20 GB free while building; the game itself is a few GB |
 | Python | [Python 3.10 or newer from python.org](https://www.python.org/downloads/) with *Add python.exe to PATH* ticked (not the Microsoft Store build) |
