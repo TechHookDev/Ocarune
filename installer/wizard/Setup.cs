@@ -180,7 +180,9 @@ class Setup : Form {
             if (shortcut.Checked) try {
                 dynamic sh = Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell"));
                 var l = sh.CreateShortcut(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "Ocarina of Time.lnk"));
-                l.TargetPath = exe; l.WorkingDirectory = dir.tb.Text; l.IconLocation = exe; l.Description = "The Legend of Zelda: Ocarina of Time"; l.Save();
+                string ico = Path.Combine(dir.tb.Text, "ocarune.ico");
+                try { File.Copy(Path.Combine(here, "oot.ico"), ico, true); } catch { ico = exe; }   // (the game's exe has no icon of its own)
+                l.TargetPath = exe; l.WorkingDirectory = dir.tb.Text; l.IconLocation = ico; l.Description = "The Legend of Zelda: Ocarina of Time"; l.Save();
             } catch { }
             if (launch.Checked) Process.Start(new ProcessStartInfo(exe) { WorkingDirectory = dir.tb.Text });
             Close();

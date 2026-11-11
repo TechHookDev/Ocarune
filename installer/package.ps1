@@ -7,4 +7,5 @@ robocopy $Src (Join-Path $Out "src") /E /XD (Join-Path $Src "llvm-mingw") (Join-
 if ($LASTEXITCODE -ge 8) { throw "copy failed ($LASTEXITCODE)" }
 Copy-Item (Join-Path $PSScriptRoot "install.ps1") $Out
 Copy-Item (Join-Path $PSScriptRoot "wizard/Setup.exe") $Out
+Copy-Item (Join-Path $PSScriptRoot "wizard/oot.ico") $Out
 "Done: $Out  (zip it; they double-click Setup.exe)"
